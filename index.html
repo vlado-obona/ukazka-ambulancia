@@ -548,7 +548,11 @@ html, body { overscroll-behavior: none; }   /* potiahnutie zhora nadol nesmie ob
 /* dlhé podržanie pred presunom: pásik ukazuje, ako dlho ešte držať */
 .appt.holding { box-shadow: 0 0 0 2px var(--accent); }
 .appt.holding::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 5px; background: var(--accent);
-  transform-origin: left; animation: hold-fill 1.25s linear forwards; }
+  transform-origin: left; animation: hold-fill 1.1s linear forwards; }
+.hold-hint { position: fixed; z-index: 35; transform: translateX(-50%); width: max-content; max-width: calc(100% - 24px); padding: 9px 16px; overflow: hidden;
+  border-radius: 999px; background: var(--ink); color: #fff; font-weight: 600; text-align: center; pointer-events: none; box-shadow: 0 6px 18px rgba(22, 32, 42, .3); }
+.hold-hint.bar::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: #5fd3a4; transform-origin: left; animation: hold-fill 1.1s linear forwards; }
+.hold-hint.warn-msg { background: var(--danger); border-radius: 14px; }
 @keyframes hold-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 .edge-hint { position: fixed; z-index: 30; width: 44px; display: grid; place-items: center; pointer-events: none; border-radius: 8px;
   background: color-mix(in srgb, var(--accent) 22%, transparent); color: var(--accent); font-size: 2rem; font-weight: 700; }
@@ -800,6 +804,7 @@ html, body { overscroll-behavior: none; }   /* potiahnutie zhora nadol nesmie ob
 </div>
 
 <div id="edge-hint" class="edge-hint" aria-hidden="true" hidden></div>
+<div id="hold-hint" class="hold-hint" role="status" hidden></div>
 <dialog id="dlg" class="dlg"></dialog>
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 <div id="print" class="print"></div>
@@ -1629,7 +1634,7 @@ function leaveApp() {
   document.title = "Objednávacia kniha";
   fill($("cal"));
   fill($("tm-list")); fill($("pt-list")); fill($("settings-body"));
-  for (const id of ["urgent-bar", "place-bar", "prov-pick", "edge-hint"]) $(id).hidden = true;
+  for (const id of ["urgent-bar", "place-bar", "prov-pick", "edge-hint", "hold-hint"]) $(id).hidden = true;
   $("pt-search").value = "";
 }
 
@@ -1701,6 +1706,7 @@ function showView(name) {
 const STEP = 15;            // ťahanie a presun po 15 minútach
 const DEFAULT_LEN = 30;     // ťuknutie vytvorí blok s touto dĺžkou
 const HOLD_MOVE_MS = 1500;  // prstom sa termín presúva až po dlhom podržaní, aby sa nepohol pri posúvaní obrazovky
+const HOLD_SHOW_MS = 400;   // odvtedy beží viditeľný odpočet a obrazovka sa pod prstom neposúva
 const HOLD_GRIP_MS = 400;   // zmena dĺžky prstom: krátke podržanie úchytu
 let uidSeq = 0;
 
@@ -2231,12 +2237,18 @@ function onHandleDown(e) {
 function onApptDown(e, a, node, c) {
   if (e.button > 0 || S.drag || S.place || e.target.closest(".ring, .warn")) return;
   const g = { kind: "appt-wait", id: e.pointerId, a, node, c, x: e.clientX, y: e.clientY, mouse: e.pointerType === "mouse" };
-  if (!g.mouse) {   // prst: podržať 1,5 s; pásik na bloku ukazuje, ako dlho ešte
-    g.hint = setTimeout(() => { if (S.drag === g) node.classList.add("holding"); }, 250);
+  if (!g.mouse) {   // prst: podržať 1,5 s; pásik na bloku a nápoveda hore ukazujú, ako dlho ešte
+    g.hint = setTimeout(() => {
+      if (S.drag !== g) return;
+      g.held = true; S.touchLock = true;   // drobný pohyb prsta už obrazovku neposunie
+      node.classList.add("holding");
+      holdHint("Držte prst na mieste…", { bar: true });
+    }, HOLD_SHOW_MS);
     g.timer = setTimeout(() => {
       if (S.drag !== g) return;
       node.classList.remove("holding");
       S.touchLock = true; buzz(35); beginMove(g);
+      holdHint(`Teraz ťahajte na nový čas: ${apptName(a)}`);
     }, HOLD_MOVE_MS);
   }
   S.drag = g;
@@ -2314,6 +2326,7 @@ function reattachMove(g) {   // po prelistovaní: pôvodný blok ostáva v dokum
 async function finishMove(g, cancelled) {
   clearTimeout(g.edgeTimer);
   $("edge-hint").hidden = true;
+  holdHint(null);
   if (g.ghost) g.ghost.remove();
   g.node.classList.remove("moving");
   if (g.paged) g.node.remove();
@@ -2347,7 +2360,23 @@ function autoScroll(e, dir) {   // dir: -1 len nahor, 1 len nadol, 0 oboma smerm
 function dropWait(g) {   // čakanie na dlhé podržanie sa ruší (prst sa pohol = posúva sa obrazovka)
   clearTimeout(g.timer); clearTimeout(g.hint);
   if (g.node) g.node.classList.remove("holding");
-  S.drag = null;
+  S.drag = null; S.touchLock = false;
+  holdHint(null);
+}
+
+// Nápoveda počas držania termínu: je nad kalendárom, aby ju prst nezakryl.
+function holdHint(text, opts) {
+  const el = $("hold-hint");
+  clearTimeout(S.hintTimer);
+  S.hintSticky = false;
+  if (!text) { el.hidden = true; return; }
+  const r = $("cal-scroll").getBoundingClientRect();
+  el.style.top = r.top + 44 + "px";
+  el.style.left = r.left + r.width / 2 + "px";
+  el.className = "hold-hint" + (opts && opts.bar ? " bar" : "") + (opts && opts.warn ? " warn-msg" : "");
+  el.textContent = text;
+  el.hidden = false;
+  if (opts && opts.ms) { S.hintSticky = true; S.hintTimer = setTimeout(() => holdHint(null), opts.ms); }
 }
 
 function onPointerMove(e) {
@@ -2357,8 +2386,12 @@ function onPointerMove(e) {
   if (g.kind === "touch-wait" || g.kind === "grip-wait") { if (dist > 10) dropWait(g); return; }
   if (g.kind === "appt-wait") {
     if (g.mouse && dist > 6) beginMove(g);
-    else if (!g.mouse && dist > 10) { dropWait(g); return; }
-    else return;
+    else if (!g.mouse && dist > (g.held ? 16 : 10)) {
+      const early = g.held;   // prst sa pohol skôr, než sa termín zdvihol
+      dropWait(g);
+      if (early) holdHint("Na presun držte prst na mieste 1,5 sekundy, až potom ťahajte.", { warn: true, ms: 3200 });
+      return;
+    } else return;
   }
   if (dist > 4) g.moved = true;
   let dir = 0;   // pri zmene dĺžky posúvať kalendár len smerom, ktorým sa ťahá
@@ -2437,6 +2470,7 @@ function onPointerUp(e) {
   S.drag = null; S.touchLock = false;
   clearTimeout(g.timer); clearTimeout(g.hint);
   if (g.node) g.node.classList.remove("holding");
+  if (!S.hintSticky) holdHint(null);
   if (DRAG_KINDS.includes(g.kind)) S.lastDragEnd = Date.now();
   if (g.kind === "touch-wait") {   // ťuknutie do prázdneho miesta
     if (cancel) { /* nič */ }
@@ -2499,7 +2533,11 @@ function initCalendarGestures() {
   const sc = $("cal-scroll");
   // počas ťahania prstom sa stránka nesmie posúvať
   sc.addEventListener("touchmove", (e) => { if (S.touchLock) e.preventDefault(); }, { passive: false });
-  $("cal").addEventListener("contextmenu", (e) => e.preventDefault());
+  $("cal").addEventListener("contextmenu", (e) => {
+    const k = S.drag && S.drag.kind;
+    if (k === "appt-wait" || k === "grip-wait" || k === "touch-wait") return;   // systémové dlhé stlačenie nespotrebujeme (bez predčasnej vibrácie)
+    e.preventDefault();
+  });
   // vodorovné potiahnutie mení deň (v týždni týždeň); ošetrujúci sa mení v menu hore
   let sw = null;
   sc.addEventListener("touchstart", (e) => {
