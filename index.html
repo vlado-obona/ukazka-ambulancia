@@ -362,7 +362,7 @@ input[type="color"] { padding: 2px; min-width: 64px; }
 
 /* ------------------------------------------------------- verzia 2: kalendár */
 .cal-title { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.week-strip { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; padding: 0 12px 6px; max-width: 640px; }
+.week-strip { display: grid; grid-template-columns: repeat(var(--n, 5), minmax(0, 1fr)); gap: 4px; padding: 0 12px 6px; max-width: 640px; }
 .wday { min-height: var(--tap); padding: 2px 0; border: 1.5px solid transparent; border-radius: var(--radius); background: none; cursor: pointer;
   display: grid; place-items: center; line-height: 1.1; touch-action: manipulation; }
 .wday small { font-size: .78rem; color: var(--ink-2); text-transform: lowercase; }
@@ -413,7 +413,7 @@ input[type="color"] { padding: 2px; min-width: 64px; }
 @keyframes flash { 0%, 100% { box-shadow: 0 0 0 0 transparent; } 30% { box-shadow: 0 0 0 4px var(--accent); } }
 .appt .appt-body { touch-action: pan-y; }
 /* Úchyt dĺžky existujúceho termínu: na myši sa ukáže pri prejdení, na dotyku je vidno stále. */
-.appt-grip { position: absolute; left: min(52px, 50%); right: 3px; z-index: 2; cursor: ns-resize; touch-action: none; }
+.appt-grip { position: absolute; left: min(52px, 50%); right: 3px; z-index: 2; cursor: ns-resize; touch-action: pan-y; }
 .appt-grip::before { content: ""; position: absolute; left: 50%; top: calc(var(--in) - 3px); width: 36px; height: 6px; margin-left: -18px;
   border-radius: 999px; background: var(--c, var(--nocat)); box-shadow: 0 0 0 2px var(--surface); opacity: 0; transition: opacity .12s; }
 .appt:hover + .appt-grip::before, .appt-grip:hover::before, .appt.resizing + .appt-grip::before { opacity: 1; }
@@ -486,6 +486,204 @@ input[type="color"] { padding: 2px; min-width: 64px; }
     border-radius: var(--radius); background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2316202a' stroke-width='2' stroke-linecap='round'%3E%3Crect x='3.5' y='5' width='17' height='15.5' rx='2'/%3E%3Cpath d='M3.5 10h17M8 3v4M16 3v4'/%3E%3C/svg%3E") center/22px no-repeat; }
   #view-calendar .datepick input { position: absolute; inset: 0; width: 100%; height: 100%; min-height: 0; padding: 0; border: 0; opacity: 0; cursor: pointer; }
 }
+
+/* ------------------------------------------------ úpravy po stretnutí s doktorkou */
+html, body { overscroll-behavior: none; }   /* potiahnutie zhora nadol nesmie obnoviť stránku */
+.cal-scroll, .view.pad, .dlg { overscroll-behavior: contain; }
+
+/* výber ošetrujúceho: jedno rozbaľovacie menu v hornej lište namiesto radu štítkov */
+.prov-pick { display: inline-flex; align-items: center; gap: 8px; min-height: var(--tap); min-width: 0; padding: 0 4px 0 12px;
+  border: 1.5px solid var(--rule-strong); border-radius: var(--radius); background: var(--surface); }
+.prov-pick select { min-height: calc(var(--tap) - 3px); min-width: 0; max-width: 230px; padding: 0 4px; border: 0; background: transparent; font-weight: 700; cursor: pointer; }
+.prov-pick select:focus-visible { outline: none; }
+.prov-pick:focus-within { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.cal-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+.btn.urgent { border-color: var(--danger); color: var(--danger); }
+.cal-head .left { margin-left: auto; font-size: .8rem; font-weight: 600; color: var(--ink-2); white-space: nowrap; }
+.small { font-size: .85rem; }
+
+/* akútni pacienti na zavolanie */
+.urgent-bar { display: flex; align-items: stretch; gap: 8px; padding: 0 12px 8px; overflow-x: auto; }
+.urgent-title { flex: none; align-self: center; display: inline-flex; align-items: center; gap: 6px; font-weight: 700; color: var(--danger); }
+.urgent-card { flex: none; max-width: 300px; min-height: var(--tap); padding: 4px 12px; display: grid; align-content: center; text-align: left; line-height: 1.2; cursor: pointer;
+  border: 1.5px solid var(--danger); border-left-width: 5px; border-radius: var(--radius); background: color-mix(in srgb, var(--danger) 6%, var(--surface)); }
+.urgent-card b, .urgent-card small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.urgent-card small { color: var(--ink-2); }
+.urgent-card.called { border-style: dashed; border-left-style: solid; }
+.urgent-list { display: grid; gap: 8px; }
+.urgent-list .urgent-card { max-width: none; }
+.urgent-list .urgent-card small { white-space: normal; }
+
+.place-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 0 12px 8px; padding: 6px 6px 6px 12px;
+  border-radius: var(--radius); background: var(--accent); color: var(--on-accent); font-weight: 600; }
+.place-bar .btn { background: var(--surface); color: var(--ink); border-color: var(--surface); flex: none; }
+
+/* trvalé zdravotné upozornenie: červený trojuholník s výkričníkom */
+.warn-ico, .warn::before { width: 22px; height: 22px; flex: none;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 3.2 21.8 20.5H2.2z' fill='%23d92d20' stroke='%23d92d20' stroke-width='2.4' stroke-linejoin='round'/%3E%3Cpath d='M12 9.2v5.4' stroke='%23fff' stroke-width='2.4' stroke-linecap='round'/%3E%3Ccircle cx='12' cy='17.8' r='1.4' fill='%23fff'/%3E%3C/svg%3E") center/contain no-repeat; }
+.warn-ico { display: inline-block; vertical-align: -5px; }
+.warn { flex: none; align-self: center; width: 36px; height: 100%; max-height: var(--tap); padding: 0; border: 0; background: none; cursor: pointer;
+  display: grid; place-items: center; touch-action: manipulation; }
+.warn::before { content: ""; }
+.alert-box { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1.5px solid var(--danger); border-radius: var(--radius);
+  background: color-mix(in srgb, var(--danger) 7%, var(--surface)); }
+.call-alert { color: var(--danger); font-weight: 600; }
+
+/* stavy: ošetrený = preškrtnutý, neprišiel = sivé pole s označením, uplynutý čas = vyblednutý */
+.appt.done { opacity: .55; }
+.appt.done .appt-name { text-decoration: line-through; }
+.appt.no_show { --c: #8a94a3; background: #e4e7eb; }
+.appt.no_show .appt-name { text-decoration: none; color: var(--ink-2); }
+.appt.elapsed { opacity: .72; }
+.tag { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 4px; background: var(--ink-2); color: #fff; font-size: .72rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .02em; vertical-align: 1px; text-decoration: none; }
+.tag.bad { background: var(--danger); }
+.ring.tick::before { border-radius: 6px; }   /* štvorček = odškrtnutie ošetreného */
+.ring.tick[aria-pressed="true"]::before { border-color: var(--ink-2); background-color: var(--ink-2); }
+.call.noshow { background: #eceef1; }
+.tl-item.noshow { opacity: 1; border-color: var(--danger); border-left-color: var(--danger); background: color-mix(in srgb, var(--danger) 5%, var(--surface)); }
+
+/* dlhé podržanie pred presunom: pásik ukazuje, ako dlho ešte držať */
+.appt.holding { box-shadow: 0 0 0 2px var(--accent); }
+.appt.holding::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 5px; background: var(--accent);
+  transform-origin: left; animation: hold-fill 1.25s linear forwards; }
+@keyframes hold-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.edge-hint { position: fixed; z-index: 30; width: 44px; display: grid; place-items: center; pointer-events: none; border-radius: 8px;
+  background: color-mix(in srgb, var(--accent) 22%, transparent); color: var(--accent); font-size: 2rem; font-weight: 700; }
+
+/* celodenné voľno a čas, ktorý práve zapisuje kolega */
+.appt.block.allday { z-index: 1; left: 0; right: 0; border-radius: 0; align-items: flex-start; }
+.appt.block.allday .appt-body { justify-content: flex-start; padding-top: 8px; }
+.hold { position: absolute; left: 3px; right: 3px; z-index: 3; padding: 2px 8px; overflow: hidden; border: 2px dashed var(--ink-2); border-radius: 6px;
+  background: repeating-linear-gradient(135deg, var(--shade) 0 6px, transparent 6px 12px), var(--surface); color: var(--ink-2); font-size: .85rem; font-weight: 600; }
+.cal-col.drafting { z-index: 4; }
+
+.daychip { cursor: pointer; }
+.daychip input { width: 20px; height: 20px; margin: 0; }
+.sms summary { min-height: var(--tap); display: flex; align-items: center; font-weight: 600; cursor: pointer; }
+.sms-text { font-size: .9rem; }
+
+/* úzke stĺpce (týždeň na telefóne): bez krúžku, meno na celú šírku */
+.cal-col { container-type: inline-size; }
+@container (max-width: 112px) {
+  .appt .ring { display: none; }
+  .appt .appt-body { padding: 2px 2px 2px 5px; justify-content: flex-start; }
+  .appt.short .appt-body { flex-direction: column; align-items: flex-start; gap: 0; }
+  .appt .appt-name { font-size: .8rem; line-height: 1.15; white-space: normal; overflow-wrap: anywhere; }
+  .appt .appt-meta { display: none; }
+  .appt .tag { margin-left: 0; font-size: .6rem; padding: 0 3px; }
+  .appt .warn { position: absolute; right: 0; top: 0; width: 20px; height: 20px; }
+  .appt .warn::before { width: 14px; height: 14px; }
+  .appt-grip { left: 25%; }
+  .draft-label { padding: 2px 3px; font-size: .7rem; white-space: normal; line-height: 1.1; }
+  .hold { padding: 1px 3px; font-size: .68rem; }
+}
+
+/* ------------------------------------------------ maximum plochy pre kalendár
+   Navigácia nie je v hornej lište: na šírku je to úzky zvislý pás vľavo, na výšku lišta dole.
+   Nad kalendárom ostáva jediný riadok ovládania (na telefóne na výšku dva). */
+.short { display: none; }
+.offline { position: fixed; top: 6px; left: 50%; transform: translateX(-50%); z-index: 40; box-shadow: 0 4px 14px rgba(22, 32, 42, .25); }
+.acct { min-width: 0; min-height: var(--tap); padding: 4px 6px; border: 1.5px solid var(--rule-strong); border-radius: var(--radius); background: var(--surface);
+  font-weight: 600; cursor: pointer; touch-action: manipulation; }
+.acct:hover { border-color: var(--accent); }
+.acct .user-name { display: block; max-width: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: inherit; }
+.prov-slot { display: flex; min-width: 0; }
+.prov-slot .prov-pick { width: 100%; }
+.prov-slot .prov-pick select { flex: 1; }
+#urgent-count { display: inline-flex; align-items: center; gap: 6px; padding: 0 10px; border-color: var(--danger); color: var(--danger); font-weight: 700; font-variant-numeric: tabular-nums; }
+#view-tomorrow .prov-slot { flex: 0 1 260px; }
+
+/* jeden riadok: [ošetrujúci] ‹ Dnes › dátum … [Deň|Týždeň] [Voľný] [+ Urgentný] [Nový termín] */
+#view-calendar > .toolbar { flex-wrap: wrap; justify-content: flex-start; align-items: center; gap: 6px 8px; padding: 4px 8px; }
+#view-calendar .toolbar-right, #view-calendar .cal-actions { display: contents; }
+#view-calendar .prov-slot { order: -1; flex: 0 1 210px; }
+#view-calendar .datenav { flex: none; width: auto; flex-wrap: nowrap; gap: 6px; }
+#view-calendar .cal-title { flex: 1 1 0; min-width: 0; overflow: hidden; }
+#view-calendar .day-title { display: block; width: auto; order: 0; margin: 0 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#view-calendar .seg { margin-left: auto; }
+#view-calendar .cal-title + .toolbar-right .seg { margin-left: 0; }
+.week-strip { padding-bottom: 4px; }
+.urgent-bar { padding-bottom: 6px; }
+
+@media (max-width: 1499px) {   /* nadpis s dátumami sa zmestí len na širokú obrazovku; dni sú aj v hlavičke stĺpcov */
+  #view-calendar .cal-title { display: none; }
+  #view-calendar .seg { margin-left: auto !important; }
+}
+@media (max-width: 1359px) {   /* menej miesta: krátke nápisy a dátum ako ikona */
+  .full { display: none; }
+  .short { display: inline; }
+  #view-calendar .toolbar .btn { padding: 0 10px; }
+  #view-calendar .seg-btn { padding: 0 10px; }
+  #view-calendar .prov-slot { flex: 0 1 170px; }
+  #view-calendar .datepick { flex: none; width: var(--tap); height: var(--tap); position: relative; border: 1.5px solid var(--rule-strong);
+    border-radius: var(--radius); background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2316202a' stroke-width='2' stroke-linecap='round'%3E%3Crect x='3.5' y='5' width='17' height='15.5' rx='2'/%3E%3Cpath d='M3.5 10h17M8 3v4M16 3v4'/%3E%3C/svg%3E") center/22px no-repeat; }
+  #view-calendar .datepick input { position: absolute; inset: 0; width: 100%; height: 100%; min-height: 0; padding: 0; border: 0; opacity: 0; cursor: pointer; }
+}
+
+/* zoznam akútnych ako pás kariet len na veľkej obrazovke; inde ho nahrádza počítadlo v riadku ovládania */
+@media not all and (min-width: 1100px) and (min-height: 900px) { .urgent-bar { display: none; } }
+@media (min-width: 1100px) and (min-height: 900px) { #urgent-count { display: none; } }
+
+/* --- na šírku (tablet, počítač, telefón naležato): navigácia ako úzky pás vľavo */
+@media (min-width: 700px), (orientation: landscape) and (max-height: 500px) {
+  .shell { flex-direction: row; padding-bottom: 0; }
+  .shell > .topbar { position: static; flex: none; width: 76px; flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 4px; overflow-y: auto;
+    padding: 6px 4px max(6px, env(safe-area-inset-bottom)) max(4px, env(safe-area-inset-left)); border-bottom: 0; border-right: 1px solid var(--rule-strong); box-shadow: none; }
+  .shell .topbar .logo { width: 58px; align-self: center; margin: 2px 0 4px; }
+  .shell .tabs { position: static; order: 0; flex: none; flex-direction: column; flex-wrap: nowrap; gap: 2px; padding: 0; overflow: visible;
+    background: none; border: 0; box-shadow: none; }
+  .shell .tab { flex: none; width: 100%; min-height: 52px; padding: 4px 2px; flex-direction: column; justify-content: center; gap: 2px; text-align: center;
+    font-size: .78rem; line-height: 1.15; }
+  .shell .who { width: auto; margin: auto 0 0; flex-direction: column; align-items: stretch; gap: 4px; }
+  .shell .demo { padding: 2px 4px; font-size: .68rem; text-align: center; }
+  .shell .acct { font-size: .78rem; text-align: center; }
+  .shell .acct .user-name { white-space: normal; overflow-wrap: anywhere; line-height: 1.15; }
+  .shell .view { min-width: 0; }
+}
+@media (min-width: 700px) and (max-height: 800px), (orientation: landscape) and (max-height: 500px) {
+  .week-strip { display: none; }   /* málo výšky: dni sa menia šípkami, dátumom alebo potiahnutím */
+}
+@media (orientation: landscape) and (max-height: 500px) {   /* telefón naležato */
+  .shell > .topbar { width: 68px; padding-top: 2px; }
+  .shell .topbar .logo, .shell .demo { display: none; }
+  .shell .tab { min-height: 46px; }
+  #view-calendar > .toolbar { padding-block: 2px; gap: 4px 6px; }
+  #view-calendar .toolbar .btn, #view-calendar .seg-btn { padding: 0 8px; }
+  #view-calendar .prov-slot { flex-basis: 124px; }
+  #view-calendar .prov-pick { padding-left: 6px; gap: 4px; }
+  .cal-head { padding-block: 3px; }
+  .cal-head.day button { padding-block: 2px; min-height: 36px; }
+  #new-appt { position: fixed; right: max(14px, env(safe-area-inset-right)); bottom: 12px; z-index: 15; min-height: 48px; padding: 0 18px;
+    border-radius: 999px; box-shadow: 0 6px 18px rgba(0, 0, 0, .35); }
+  .cal { padding-bottom: 64px; }
+  .toast { bottom: 12px; }
+  .dlg { width: min(100% - 16px, 620px); height: auto; max-height: calc(100% - 8px); margin: auto; border-radius: 12px; }
+}
+
+/* --- telefón na výšku: navigácia dole pri palci, hore len dva riadky ovládania */
+@media (max-width: 699px) and (orientation: portrait), (max-width: 699px) and (min-height: 501px) {
+  .shell > .topbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; flex-direction: row; flex-wrap: nowrap; align-items: stretch; gap: 2px;
+    padding: 4px max(4px, env(safe-area-inset-right)) calc(4px + env(safe-area-inset-bottom)) max(4px, env(safe-area-inset-left));
+    border-bottom: 0; border-top: 1px solid var(--rule-strong); background: var(--surface); box-shadow: 0 -2px 10px rgba(22, 32, 42, .08); }
+  .shell .topbar .logo, .shell .demo { display: none; }
+  .shell .tabs { position: static; order: 0; flex: 1 1 0; min-width: 0; flex-wrap: nowrap; gap: 0; padding: 0; overflow: visible; background: none; border: 0; box-shadow: none; }
+  .shell .tab { flex: 1 1 0; min-width: 0; min-height: 52px; padding: 0 2px; flex-direction: column; justify-content: center; gap: 0; font-size: .82rem; line-height: 1.15; }
+  .shell .who { flex: 0 1 78px; width: auto; min-width: 0; margin: 0; }
+  .shell .acct { width: 100%; min-height: 52px; border: 0; background: none; color: var(--ink-2); font-size: .82rem; }
+  #view-calendar .datenav { flex: 1 1 auto; }
+  #view-calendar .cal-actions { display: flex; order: 9; width: 100%; flex-wrap: nowrap; align-items: center; gap: 6px; }
+  #view-calendar .prov-slot { order: 0; flex: 1 1 0; }
+  #view-calendar .prov-pick { padding-left: 8px; gap: 6px; }
+  #view-calendar .toolbar .btn:not(.icon):not(#new-appt) { padding: 0 9px; }
+  #new-appt .full { display: inline; }
+  #new-appt .short { display: none; }
+  #view-tomorrow .prov-slot { flex: 1 1 100%; }
+  .cal-head .left { margin-left: 0; font-size: .72rem; }
+  .place-bar { margin: 0 8px 6px; }
+}
 </style>
 </head>
 <body>
@@ -497,7 +695,7 @@ input[type="color"] { padding: 2px; min-width: 64px; }
     <div class="login-head"><div class="logo"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 467.7 239.8" role="img" aria-label="ArtSmile"><path fill="currentColor" fill-rule="evenodd" d="M269.31 235.54C267.80 233.92 266.64 231.78 266.36 230.15C265.78 226.83 266.42 223.12 268.16 219.68C268.97 218.08 268.97 218.09 266.93 217.01C262.32 214.56 259.51 210.54 258.22 204.55C257.28 200.19 257.67 192.95 259.08 188.47C259.31 187.74 259.50 187.08 259.50 186.99C259.50 186.81 260.45 184.31 261.10 182.75C265.79 171.63 276.61 160.15 287.37 154.87C296.92 150.18 305.68 149.25 312.25 152.22C316.68 154.22 319.53 158.14 320.35 163.33C320.59 164.87 320.45 168.20 320.09 169.55C319.42 172.08 319.69 172.14 322.61 170.11C324.10 169.07 325.82 167.94 330.50 164.92C331.37 164.36 332.35 163.74 332.67 163.54C333.62 162.97 334.26 162.18 335.07 160.58C338.75 153.37 343.41 147.65 348.25 144.39C352.90 141.25 357.11 141.88 356.57 145.63C356.39 146.89 355.21 148.78 353.02 151.31C351.01 153.62 344.36 158.64 341.78 159.79C340.71 160.27 339.96 161.07 339.37 162.33C337.81 165.74 336.69 169.44 335.01 176.75C334.47 179.11 333.80 181.51 333.14 183.50C332.94 184.10 332.65 185.03 332.49 185.58C331.61 188.60 329.00 193.71 326.27 197.75C322.00 204.08 315.54 209.84 308.42 213.69C305.64 215.19 302.46 216.67 302.02 216.67C301.92 216.67 301.37 216.85 300.79 217.07C299.23 217.68 296.71 218.45 295.58 218.67C295.03 218.77 293.87 219.04 293.00 219.26C288.05 220.49 277.82 220.40 273.08 219.09C271.23 218.57 270.82 218.56 270.37 219.04C269.86 219.58 268.88 222.10 268.30 224.33C267.36 227.97 267.62 229.87 269.60 233.50C270.60 235.34 270.74 236.00 270.11 236.00C269.90 236.00 269.54 235.79 269.31 235.54ZM194.24 231.65C193.41 231.58 192.07 231.33 191.26 231.09C190.46 230.86 189.72 230.67 189.63 230.67C189.28 230.67 186.71 229.42 185.58 228.70C184.11 227.76 181.46 225.11 180.48 223.58C176.26 217.06 175.39 207.08 178.02 195.33C179.10 190.50 181.50 183.52 184.37 176.92C186.64 171.70 192.88 159.12 194.03 157.47C194.20 157.23 194.33 156.98 194.33 156.91C194.33 156.73 198.67 149.26 200.33 146.57C200.52 146.27 200.54 146.10 200.40 145.88C200.22 145.60 199.04 145.58 178.62 145.58C157.27 145.58 157.03 145.59 156.66 145.92C156.45 146.10 153.45 149.32 150.00 153.08C138.54 165.55 137.30 166.90 134.86 169.50C127.31 177.57 114.55 190.33 114.04 190.33C113.62 190.33 113.39 189.91 112.47 187.42C112.20 186.68 111.71 185.37 111.39 184.50C110.43 181.93 110.44 181.78 111.69 180.31C118.60 172.21 132.68 156.89 140.86 148.57C143.63 145.76 143.76 145.33 141.88 145.33C138.80 145.33 134.47 143.86 132.64 142.19C130.66 140.38 129.80 136.93 130.78 134.79C131.57 133.09 133.42 131.59 136.00 130.55C138.01 129.74 138.19 130.25 136.53 132.04C133.45 135.36 133.62 138.99 136.94 140.94C138.78 142.02 143.19 142.86 146.14 142.69C146.40 142.67 148.01 141.22 151.22 138.12C164.25 125.49 171.88 118.69 182.83 109.92C192.39 102.27 203.39 94.63 211.33 90.12C212.20 89.62 213.52 88.88 214.25 88.46C214.98 88.05 215.77 87.65 216.00 87.58C216.23 87.51 216.68 87.28 217.00 87.06C217.32 86.84 217.63 86.67 217.69 86.67C217.75 86.67 218.58 86.25 219.53 85.74C223.08 83.84 228.22 81.55 234.50 79.08C236.30 78.38 241.06 76.82 243.33 76.19C247.42 75.06 248.40 74.83 251.25 74.27C258.58 72.85 263.91 72.32 271.44 72.28C276.91 72.24 277.08 72.26 277.08 72.84C277.08 73.19 276.83 73.38 275.25 74.17C269.83 76.90 265.08 80.13 259.18 85.07C257.86 86.18 256.55 87.26 256.27 87.48C255.98 87.70 254.52 89.09 253.03 90.57C245.10 98.38 239.34 105.39 232.96 115.01C227.70 122.94 224.66 128.21 219.89 137.65C217.84 141.72 217.60 142.37 218.10 142.57C218.24 142.62 221.99 142.67 226.43 142.67C235.70 142.67 235.17 142.57 235.17 144.16C235.17 145.58 235.75 145.50 225.23 145.50C216.03 145.50 216.03 145.50 215.54 145.91C215.13 146.25 213.65 148.52 210.00 154.42C204.48 163.32 196.26 178.22 193.12 185.00C192.01 187.39 191.70 188.10 190.70 190.42C187.81 197.14 186.38 201.34 185.09 206.92C184.01 211.59 184.08 217.08 185.25 219.74C186.40 222.33 188.44 224.39 191.32 225.87C199.74 230.20 214.08 223.99 227.33 210.25C231.17 206.28 238.33 196.15 244.66 185.75C245.61 184.19 246.66 182.47 247.00 181.92C247.54 181.05 248.23 179.87 251.16 174.91C251.48 174.35 252.05 173.33 252.41 172.63C253.40 170.75 253.60 170.83 248.02 170.83C242.12 170.83 240.13 170.67 238.50 170.06C236.42 169.29 235.34 167.86 235.57 166.19C235.79 164.55 237.94 162.21 238.62 162.88C238.83 163.09 238.77 163.29 238.16 164.46C237.45 165.80 237.45 165.80 237.82 166.55C238.23 167.41 238.70 167.69 240.44 168.10C242.19 168.52 254.21 168.31 254.83 167.86C255.96 167.02 266.68 145.86 272.91 132.17C275.55 126.36 275.83 125.72 276.92 123.17C277.86 120.95 278.49 119.49 278.92 118.50C279.14 118.00 279.51 117.10 279.75 116.50C280.96 113.48 282.58 109.45 283.00 108.42C283.64 106.82 284.95 103.33 285.43 101.92C285.65 101.27 286.08 100.04 286.39 99.17C289.48 90.58 292.18 80.94 293.34 74.33C293.43 73.83 293.69 72.35 293.92 71.05C294.15 69.75 294.45 67.58 294.59 66.22C294.72 64.86 294.95 62.81 295.09 61.67C295.67 56.90 295.57 45.78 294.92 42.17C294.79 41.48 294.60 40.25 294.50 39.43C293.78 33.73 291.17 26.58 287.95 21.50C284.71 16.38 278.98 11.39 274.00 9.36C271.80 8.46 269.68 7.67 269.46 7.67C269.35 7.66 268.76 7.52 268.17 7.33C263.26 5.83 253.60 5.36 247.50 6.31C246.35 6.49 245.04 6.68 244.58 6.75C240.09 7.34 231.43 10.15 226.04 12.76C225.01 13.26 224.13 13.67 224.09 13.67C223.89 13.67 219.24 16.26 216.08 18.13C210.92 21.19 203.69 26.91 197.06 33.19C195.76 34.41 194.45 35.73 194.14 36.11C191.03 39.97 192.41 32.29 195.85 26.58C200.27 19.25 208.91 12.04 219.67 6.69C221.46 5.80 223.53 4.83 224.27 4.54L225.61 4.00L255.44 4.00L285.26 4.00L286.84 5.02C294.03 9.66 301.76 19.19 304.75 27.08C308.74 37.64 309.43 46.97 307.34 62.25C306.93 65.23 305.79 70.60 304.57 75.25C303.34 79.91 303.20 80.43 302.86 81.50C302.67 82.10 302.24 83.48 301.91 84.58C301.57 85.68 301.18 86.88 301.04 87.25C300.91 87.62 300.38 89.08 299.88 90.50C298.58 94.16 297.29 97.61 296.53 99.50C295.97 100.89 295.22 102.78 294.67 104.17C294.47 104.67 294.12 105.48 293.90 105.96C293.68 106.45 293.50 106.89 293.50 106.94C293.50 107.10 291.46 111.72 288.95 117.25C287.23 121.04 280.16 135.44 278.71 138.08C278.26 138.91 277.33 140.67 276.63 142.00C274.43 146.22 268.10 157.67 266.28 160.72C265.85 161.44 265.50 162.06 265.50 162.09C265.50 162.13 264.82 163.28 264.00 164.66C261.99 168.00 261.99 168.00 264.60 168.00C266.59 168.00 266.76 168.05 267.09 168.68C267.45 169.37 267.39 169.96 266.92 170.42C266.52 170.83 266.47 170.83 263.72 170.83C260.23 170.84 260.39 170.75 258.69 173.58C254.38 180.76 246.54 192.69 242.87 197.67C242.36 198.35 241.67 199.29 241.34 199.75C232.60 211.65 225.27 219.64 218.19 224.96C211.57 229.94 202.73 232.41 194.24 231.65ZM125.13 226.83C119.83 225.52 113.19 218.84 108.49 210.08C105.66 204.80 105.63 204.75 103.64 200.33C102.53 197.88 102.18 197.33 101.74 197.33C101.64 197.33 100.73 197.88 99.73 198.56C94.13 202.34 86.38 206.42 79.83 209.04C79.05 209.36 78.00 209.78 77.50 209.99C72.26 212.16 61.95 214.80 56.00 215.49C39.72 217.38 26.14 214.18 15.83 206.03C9.73 201.19 5.36 194.96 4.32 189.58C2.98 182.62 5.54 177.33 12.00 173.75C16.95 171.01 20.73 171.08 23.84 173.96C28.45 178.22 26.97 185.67 21.08 187.92C16.19 189.78 10.77 186.54 10.00 181.28C9.76 179.66 9.19 179.40 8.22 180.46C6.58 182.23 6.37 184.20 7.34 188.48C8.05 191.61 10.24 195.71 13.08 199.24C17.13 204.27 23.78 208.86 30.08 210.97C32.42 211.75 35.66 212.64 36.58 212.75C37.04 212.81 37.98 212.96 38.67 213.10C41.59 213.66 47.64 213.81 51.68 213.42C65.35 212.10 79.61 206.38 92.00 197.27C94.11 195.71 97.17 193.26 98.46 192.09C99.62 191.03 99.78 190.46 99.23 189.20C98.37 187.19 95.18 177.26 93.98 172.83C93.70 171.78 93.25 170.17 92.98 169.27C92.72 168.36 92.50 167.53 92.50 167.42C92.50 167.30 92.29 166.43 92.02 165.48C91.58 163.88 91.31 162.77 90.00 157.25C89.40 154.72 88.55 150.93 88.41 150.17C88.36 149.85 88.13 148.80 87.91 147.83C87.69 146.87 87.28 144.85 87.00 143.33C86.71 141.82 86.36 140.02 86.23 139.33C86.09 138.65 85.83 137.22 85.66 136.17C85.48 135.11 85.15 133.24 84.92 132.00C84.20 128.09 82.76 119.25 82.50 117.17C82.40 116.39 82.17 114.92 82.00 113.92C81.82 112.91 81.56 111.03 81.41 109.75C81.27 108.47 81.07 107.09 80.99 106.70C80.90 106.30 80.71 104.95 80.58 103.70C80.44 102.44 80.18 100.40 80.00 99.17C79.82 97.93 79.60 96.05 79.50 95.00C79.40 93.95 79.18 92.03 79.01 90.75C78.83 89.47 78.60 87.37 78.50 86.08C78.40 84.80 78.17 82.49 77.99 80.95C77.26 74.53 77.21 56.49 77.91 50.49C78.04 49.35 78.27 47.22 78.41 45.75C78.95 40.31 80.32 34.03 82.17 28.50C86.87 14.46 95.48 6.30 107.62 4.40C111.31 3.83 116.68 3.83 120.75 4.41C127.59 5.39 134.25 7.80 141.27 11.84C142.07 12.29 142.74 12.67 142.77 12.67C142.88 12.67 147.14 15.42 149.17 16.80C151.55 18.43 156.46 22.08 163.38 27.40C179.19 39.53 185.51 43.07 194.84 45.03C198.67 45.83 203.90 45.83 207.96 45.03C209.45 44.73 210.88 44.41 211.13 44.32C211.38 44.22 212.22 43.96 213.00 43.75C218.25 42.29 226.92 37.73 231.92 33.82C233.48 32.60 234.35 32.43 233.82 33.45C233.06 34.96 226.14 41.02 222.75 43.15C222.11 43.56 221.32 44.05 221.00 44.26C220.26 44.73 216.72 46.67 216.60 46.67C216.55 46.67 216.03 46.89 215.44 47.16C214.85 47.43 213.21 48.03 211.81 48.50C201.39 51.99 190.65 51.46 180.48 46.94C179.33 46.43 171.21 42.00 167.50 39.86C165.99 38.99 164.34 38.04 163.83 37.75C163.33 37.46 162.05 36.70 161.00 36.06C159.95 35.42 158.56 34.59 157.92 34.22C157.27 33.85 156.00 33.11 155.08 32.58C154.17 32.05 153.08 31.41 152.67 31.16C152.03 30.78 149.16 29.16 146.58 27.75C146.21 27.55 145.30 27.04 144.55 26.61C141.43 24.84 136.76 22.64 131.67 20.55C121.06 16.19 111.63 15.83 105.10 19.53C97.55 23.81 92.02 32.34 89.08 44.24C88.76 45.54 88.50 46.77 88.50 46.97C88.50 47.17 88.32 48.26 88.09 49.38C87.87 50.50 87.57 52.50 87.42 53.83C87.27 55.16 87.03 57.15 86.90 58.25C86.33 62.89 86.44 79.52 87.08 86.37C87.21 87.77 87.40 90.04 87.50 91.42C87.60 92.79 87.83 95.00 88.00 96.33C88.17 97.66 88.40 99.61 88.50 100.67C88.60 101.72 88.80 103.30 88.94 104.17C89.07 105.04 89.37 107.10 89.58 108.75C90.01 111.99 90.25 113.57 91.01 118.33C91.45 121.05 91.71 122.60 92.74 128.42C93.14 130.71 94.20 136.04 95.02 139.92C95.49 142.11 95.70 143.09 97.00 148.92C97.29 150.20 97.67 151.85 97.86 152.58C98.05 153.32 98.34 154.55 98.51 155.33C98.68 156.11 98.92 157.05 99.05 157.42C99.18 157.78 99.34 158.38 99.40 158.75C99.46 159.12 99.73 160.24 100.00 161.25C100.27 162.26 100.73 163.98 101.01 165.08C102.07 169.12 104.04 175.89 104.85 178.25C105.04 178.80 105.33 179.70 105.49 180.25C105.79 181.25 107.59 186.37 108.42 188.58C109.59 191.72 111.81 197.05 112.23 197.70C112.36 197.91 112.51 198.25 112.57 198.45C112.79 199.18 115.82 204.80 117.00 206.67C122.11 214.75 127.10 218.13 132.01 216.84C137.62 215.37 145.19 206.70 153.91 191.75C154.72 190.38 155.63 188.83 155.94 188.31C156.25 187.79 156.50 187.32 156.50 187.26C156.50 187.21 156.68 186.88 156.89 186.54C158.02 184.73 161.83 177.52 162.51 175.92C162.88 175.03 163.59 174.17 163.95 174.17C164.24 174.17 164.23 175.35 163.93 176.70C163.80 177.28 163.60 178.46 163.50 179.33C163.39 180.20 163.12 181.63 162.90 182.50C162.68 183.37 162.50 184.20 162.50 184.35C162.50 184.64 161.81 187.05 160.97 189.75C156.72 203.29 148.74 215.31 139.25 222.44C133.89 226.47 129.38 227.87 125.13 226.83ZM396.22 219.52C395.19 219.34 394.00 218.52 393.37 217.58C392.65 216.48 392.50 215.91 392.38 213.86C392.31 212.60 392.22 212.11 392.05 212.05C391.91 211.99 391.22 212.53 390.28 213.44C385.19 218.39 381.21 220.07 377.30 218.94C374.30 218.07 372.77 213.02 374.14 208.49C375.00 205.64 376.61 202.90 379.32 199.67C383.27 194.96 384.44 190.55 381.95 189.72C380.26 189.15 377.25 190.56 374.08 193.40C371.55 195.68 367.91 199.96 366.53 202.28C366.27 202.72 365.54 203.91 364.92 204.92C362.94 208.14 361.96 209.73 361.50 210.50C361.25 210.91 360.35 212.38 359.50 213.75C358.65 215.12 357.70 216.68 357.39 217.20C356.52 218.67 356.53 218.67 353.25 218.67C351.25 218.67 350.34 218.61 350.20 218.47C349.87 218.14 349.97 217.59 350.48 216.89C350.74 216.53 351.36 215.57 351.87 214.74C353.03 212.86 355.58 208.77 356.08 208.00C361.89 198.99 364.29 193.72 363.96 190.72C363.57 187.27 359.47 189.69 353.34 197.00C350.71 200.14 350.83 199.97 342.34 212.63C339.82 216.40 338.47 218.26 338.15 218.43C337.54 218.74 333.01 218.77 332.70 218.47C332.35 218.12 332.48 217.49 333.06 216.69C333.36 216.26 334.46 214.53 335.49 212.83C337.13 210.15 338.26 208.33 341.01 203.92C346.91 194.44 348.22 191.37 346.92 190.08C345.50 188.65 342.12 191.01 336.95 197.06C335.03 199.31 335.37 197.20 337.40 194.31C338.90 192.17 340.69 190.33 342.45 189.13C344.90 187.46 347.78 187.15 349.46 188.39C351.00 189.52 351.76 191.84 351.37 194.25C351.03 196.30 351.29 196.20 354.54 192.96C358.80 188.70 361.08 187.33 363.89 187.33C366.82 187.33 368.32 189.52 368.42 193.92C368.44 195.02 368.47 195.97 368.48 196.04C368.53 196.41 369.26 196.09 369.80 195.46C372.45 192.42 376.40 189.45 379.33 188.30C381.25 187.55 383.91 187.49 385.23 188.16C387.70 189.43 388.67 192.32 387.84 195.95C387.03 199.45 385.79 201.94 383.20 205.20C378.58 211.01 377.36 213.77 378.48 215.95C379.90 218.74 383.34 218.01 387.26 214.10C390.38 210.98 393.12 207.16 397.91 199.25C399.05 197.36 402.56 191.20 403.75 189.00C404.24 188.08 404.53 188.01 407.48 187.99C409.11 187.98 410.27 188.04 410.37 188.14C410.66 188.43 410.56 189.15 410.13 189.79C409.70 190.44 409.59 190.63 406.50 196.00C405.47 197.79 404.17 200.00 403.62 200.92C401.59 204.30 400.38 206.46 398.69 209.71C396.57 213.78 396.01 216.07 396.88 217.09C397.29 217.57 397.35 217.58 398.78 217.58C400.18 217.58 400.30 217.55 401.42 216.93C404.21 215.36 407.22 212.62 410.51 208.67C413.82 204.70 415.22 202.65 419.00 196.25C419.43 195.52 420.47 193.79 421.32 192.42C422.16 191.04 423.75 188.42 424.85 186.58C425.96 184.75 427.62 182.01 428.54 180.50C431.31 175.96 437.84 165.15 438.42 164.14C439.62 162.06 440.51 160.82 440.93 160.66C441.56 160.42 446.05 160.45 446.30 160.70C446.60 161.00 446.54 161.57 446.18 162.03C446.00 162.25 445.23 163.52 444.46 164.84C443.04 167.28 440.80 171.05 439.88 172.58C439.60 173.04 438.26 175.29 436.91 177.58C435.55 179.88 434.00 182.50 433.45 183.42C432.91 184.33 432.11 185.68 431.67 186.42C430.13 189.03 427.48 193.48 424.84 197.92C419.40 207.03 416.53 213.89 417.34 215.84C417.78 216.92 418.76 216.83 420.88 215.54C424.21 213.50 430.51 207.61 432.40 204.78C436.52 198.59 443.21 192.99 451.33 188.90C453.74 187.69 455.23 187.33 457.81 187.34C461.86 187.34 463.78 188.54 463.73 191.02C463.66 194.90 456.86 199.52 447.25 202.23C446.43 202.47 445.14 202.77 444.38 202.91C441.39 203.48 441.22 203.59 439.43 205.99C436.20 210.33 435.36 214.24 437.28 216.02C440.41 218.94 447.32 217.18 454.08 211.75C456.57 209.75 460.41 205.76 461.58 203.95C461.89 203.48 462.46 203.07 462.61 203.22C463.05 203.67 460.38 207.26 457.25 210.42C451.05 216.69 444.77 219.67 439.51 218.85C436.30 218.35 433.07 214.54 432.42 210.50C432.11 208.58 431.88 208.67 428.56 211.96C421.26 219.21 415.96 221.05 413.39 217.22C412.58 216.01 412.33 214.89 412.33 212.38C412.33 210.42 412.19 210.17 411.38 210.67C411.09 210.84 410.74 211.16 410.60 211.38C410.45 211.59 409.45 212.58 408.36 213.57C403.33 218.14 399.37 220.08 396.22 219.52ZM289.67 218.11C290.63 217.88 291.75 217.65 292.17 217.59C293.98 217.32 299.24 215.24 301.40 213.94C311.82 207.70 319.05 198.86 325.87 184.00C327.51 180.42 329.14 176.24 330.50 172.08C331.07 170.34 331.68 168.53 331.86 168.07C332.20 167.15 332.14 166.67 331.67 166.67C331.51 166.67 330.04 167.56 328.40 168.65C326.76 169.73 323.97 171.57 322.21 172.73C318.77 174.99 318.87 174.89 318.00 177.10C315.89 182.47 313.64 186.51 310.13 191.21C305.27 197.73 299.79 202.03 293.67 204.14C291.92 204.74 291.92 204.74 288.50 204.75C285.08 204.75 285.08 204.75 283.94 204.21C283.31 203.91 282.61 203.67 282.39 203.67C281.34 203.67 276.11 209.63 272.82 214.58C271.06 217.23 271.08 217.37 273.17 217.67C273.85 217.76 274.85 217.96 275.40 218.10C278.07 218.79 286.67 218.80 289.67 218.11ZM270.71 215.04C271.11 214.51 271.95 213.38 272.57 212.51C274.01 210.51 276.76 207.26 278.96 204.97C279.90 203.99 280.67 203.07 280.67 202.93C280.67 202.78 280.14 202.10 279.50 201.41C278.07 199.86 277.64 199.12 277.16 197.42C275.99 193.26 277.73 189.63 281.88 187.59C284.56 186.27 286.09 186.24 287.21 187.48C289.43 189.93 287.29 194.83 284.00 194.83C282.16 194.83 280.85 193.30 281.07 191.43C281.19 190.44 281.03 190.12 280.49 190.19C279.50 190.34 278.61 192.61 278.60 195.01C278.60 196.74 278.61 196.80 279.28 198.18C280.08 199.84 281.57 201.50 282.25 201.50C282.31 201.50 283.05 200.84 283.89 200.04C284.73 199.23 286.31 197.79 287.40 196.83C288.49 195.87 290.14 194.42 291.07 193.60C291.99 192.79 293.15 191.83 293.63 191.47C294.11 191.11 295.05 190.35 295.71 189.78C298.73 187.17 307.91 180.23 313.00 176.71C317.07 173.89 317.13 173.83 317.79 171.58C318.88 167.88 318.89 162.91 317.81 160.19C316.82 157.68 315.71 156.11 314.00 154.78C312.94 153.96 311.12 152.83 310.85 152.83C310.75 152.83 309.98 152.60 309.13 152.31C307.64 151.80 307.49 151.78 304.83 151.78C296.70 151.80 288.54 155.87 279.43 164.46C272.82 170.70 268.37 177.11 265.58 184.42C265.37 184.97 265.08 185.72 264.94 186.08C262.03 193.60 261.30 203.59 263.26 208.88C264.33 211.77 266.60 214.69 268.50 215.63C269.64 216.19 269.88 216.13 270.71 215.04ZM203.70 212.30C203.34 211.94 203.48 211.50 204.43 210.03C204.94 209.23 205.89 207.72 206.54 206.67C207.18 205.61 208.36 203.70 209.16 202.42C209.96 201.13 211.48 198.70 212.54 197.00C217.30 189.35 219.29 184.64 218.25 183.50C217.23 182.38 215.07 184.07 208.70 190.97C206.93 192.88 206.67 193.08 206.67 192.49C206.67 191.04 211.56 184.57 214.09 182.67C217.65 180.01 220.30 180.29 221.93 183.50C222.54 184.69 222.71 188.15 222.26 190.07C221.79 192.07 222.44 191.89 223.96 189.58C225.07 187.90 228.91 184.13 230.75 182.92C234.38 180.52 236.34 180.67 236.78 183.39C236.99 184.72 235.60 186.15 233.13 187.13C226.18 189.91 224.35 191.99 224.28 197.15C224.24 199.84 224.99 201.05 227.02 201.59C228.13 201.88 228.31 202.06 227.92 202.50C227.45 203.02 226.49 203.21 225.56 202.98C224.44 202.69 223.55 201.74 222.58 199.76C221.74 198.07 221.05 197.17 220.60 197.17C220.14 197.17 219.06 198.29 218.22 199.63C217.79 200.34 216.16 202.83 214.61 205.17C213.06 207.50 211.39 210.02 210.90 210.76C210.41 211.50 209.81 212.20 209.58 212.30C208.98 212.58 203.97 212.57 203.70 212.30ZM291.96 202.83C299.85 200.86 308.46 192.39 314.43 180.75C315.12 179.40 315.66 178.13 315.63 177.94C315.56 177.39 314.98 177.42 314.24 178.01C313.88 178.30 312.80 179.07 311.83 179.72C309.65 181.19 303.50 185.58 301.83 186.86C301.15 187.39 299.86 188.37 298.98 189.04C293.71 193.01 288.72 197.17 284.79 200.88C283.45 202.13 283.45 202.32 284.85 202.83C286.94 203.59 288.91 203.59 291.96 202.83ZM444.20 201.66C444.69 201.56 445.57 201.31 446.17 201.09C446.76 200.87 447.70 200.54 448.25 200.36C456.58 197.56 461.51 193.56 460.47 190.42C460.10 189.32 458.78 189.05 456.33 189.57C452.63 190.36 447.20 194.46 443.66 199.14C441.75 201.67 441.85 202.12 444.20 201.66ZM411.67 181.97C409.40 181.31 408.79 178.51 410.42 176.16C412.38 173.34 416.27 174.28 416.24 177.57C416.22 180.24 413.79 182.59 411.67 181.97ZM341.22 159.04C341.55 158.79 342.14 158.35 342.54 158.07C343.72 157.22 347.00 154.76 348.50 153.59C352.20 150.72 355.17 147.00 355.17 145.25C355.17 142.44 350.17 144.10 346.20 148.23C343.91 150.63 341.58 154.24 340.47 157.14C339.78 158.92 339.77 158.97 340.00 159.25C340.29 159.60 340.54 159.56 341.22 159.04ZM191.33 142.72C204.25 142.59 202.57 142.95 204.49 139.89C216.14 121.28 226.25 108.16 236.85 97.91C240.47 94.41 246.13 89.58 248.57 87.92C249.24 87.46 250.53 86.55 251.44 85.90C253.02 84.76 255.33 83.20 257.08 82.08C257.80 81.62 258.95 80.91 261.50 79.36C261.82 79.17 262.42 78.83 262.83 78.61C263.25 78.40 264.07 77.94 264.67 77.59C265.26 77.25 266.48 76.60 267.38 76.15C269.00 75.33 269.41 74.86 268.73 74.60C268.44 74.49 264.32 74.73 262.00 75.00C258.85 75.36 252.26 76.57 250.08 77.19C247.62 77.89 244.40 78.87 244.00 79.04C243.77 79.13 242.95 79.42 242.17 79.67C241.39 79.93 240.11 80.41 239.33 80.75C238.55 81.08 237.62 81.47 237.25 81.60C236.88 81.73 236.13 82.05 235.58 82.31C235.03 82.57 234.17 82.98 233.67 83.21C230.76 84.55 227.11 86.43 226.00 87.16C225.77 87.32 225.33 87.54 225.01 87.67C224.70 87.79 223.31 88.58 221.93 89.41C218.66 91.39 218.74 91.33 214.35 94.26C210.91 96.56 209.24 97.78 202.42 103.00C196.08 107.86 188.06 114.53 181.50 120.40C176.35 125.01 160.32 141.41 160.19 142.20C160.16 142.39 160.24 142.61 160.36 142.69C160.63 142.86 176.13 142.87 191.33 142.72Z"/></svg></div><h1 id="login-clinic">Objednávacia kniha</h1></div>
 
     <section id="login-names">
-      <p class="demo-note"><strong>Verzia 2 na pripomienkovanie.</strong> Ukážka s vymyslenými údajmi. Vyberte ľubovoľné meno a zadajte hocijaké štyri číslice. Na zápis do všetkých kalendárov sa prihláste ako Sestra 1. Zmeny sa po zatvorení stránky stratia.</p>
+      <p class="demo-note"><strong>Verzia 2 na pripomienkovanie (úpravy po stretnutí).</strong> Ukážka s vymyslenými údajmi. Vyberte ľubovoľné meno a zadajte hocijaké štyri číslice. Na zápis do všetkých kalendárov sa prihláste ako Sestra 1. Zmeny sa po zatvorení stránky stratia.</p>
       <p class="lead">Kto sa prihlasuje?</p>
       <div id="login-name-list" class="name-list"></div>
       <label class="check">
@@ -533,8 +731,7 @@ input[type="color"] { padding: 2px; min-width: 64px; }
     <div class="who">
       <span class="demo">Ukážka</span>
       <span id="offline" class="offline" hidden>Bez spojenia so serverom</span>
-      <span id="user-name" class="user-name"></span>
-      <button type="button" id="logout" class="btn small">Odhlásiť sa</button>
+      <button type="button" id="account" class="acct" aria-label="Prihlásený používateľ a odhlásenie"><span id="user-name" class="user-name"></span></button>
     </div>
   </header>
 
@@ -545,19 +742,26 @@ input[type="color"] { padding: 2px; min-width: 64px; }
         <button type="button" id="day-today" class="btn">Dnes</button>
         <button type="button" id="day-next" class="btn icon" aria-label="Nasledujúci deň">›</button>
         <label class="datepick"><span class="sr">Dátum</span><input type="date" id="day-input"></label>
-        <div class="cal-title"><h2 id="day-title" class="day-title"></h2></div>
       </div>
+      <div class="cal-title"><h2 id="day-title" class="day-title"></h2></div>
       <div class="toolbar-right">
         <div class="seg" role="group" aria-label="Zobrazenie">
           <button type="button" id="mode-day" class="seg-btn">Deň</button>
           <button type="button" id="mode-week" class="seg-btn">Týždeň</button>
         </div>
-        <button type="button" id="print-day" class="btn">Tlačiť deň</button>
-        <button type="button" id="new-appt" class="btn primary">Nový termín</button>
+        <div class="cal-actions">
+          <span id="cal-prov" class="prov-slot"><label class="prov-pick" id="prov-pick" hidden><span class="dot" id="prov-dot"></span><span class="sr">Ošetrujúci</span><select id="prov-select"></select></label></span>
+          <button type="button" id="free-slot" class="btn" aria-label="Najbližší voľný termín"><span class="full">Najbližší voľný</span><span class="short">Voľný</span></button>
+          <button type="button" id="urgent-new" class="btn urgent" aria-label="Pridať urgentného pacienta"><span class="full">+ Urgentný pacient</span><span class="short">+ Urgentný</span></button>
+          <button type="button" id="urgent-count" class="btn" hidden></button>
+          <button type="button" id="print-day" class="btn">Tlačiť deň</button>
+          <button type="button" id="new-appt" class="btn primary" aria-label="Nový termín"><span class="full">Nový termín</span><span class="short">+ Termín</span></button>
+        </div>
       </div>
     </div>
-    <div id="week-strip" class="week-strip" role="group" aria-label="Dni týždňa"></div>
-    <div id="provider-bar" class="provider-bar" role="group" aria-label="Výber ošetrujúceho"></div>
+    <div id="week-strip" class="week-strip" role="group" aria-label="Najbližšie dni"></div>
+    <div id="urgent-bar" class="urgent-bar" role="group" aria-label="Akútni pacienti na zavolanie" hidden></div>
+    <div id="place-bar" class="place-bar" role="status" hidden></div>
     <div id="cal-scroll" class="cal-scroll">
       <div id="cal" class="cal"></div>
     </div>
@@ -565,6 +769,7 @@ input[type="color"] { padding: 2px; min-width: 64px; }
 
   <section id="view-tomorrow" class="view pad" hidden>
     <div class="toolbar">
+      <span id="tm-prov" class="prov-slot"></span>
       <div class="datenav">
         <button type="button" id="tm-prev" class="btn icon" aria-label="Predchádzajúci deň">‹</button>
         <button type="button" id="tm-reset" class="btn">Zajtra</button>
@@ -573,7 +778,6 @@ input[type="color"] { padding: 2px; min-width: 64px; }
         <h2 id="tm-title" class="day-title"></h2>
       </div>
     </div>
-    <div id="tm-filter" class="filter-bar" role="group" aria-label="Filter na ošetrujúceho"></div>
     <p id="tm-summary" class="lead"></p>
     <ul id="tm-list" class="call-list"></ul>
   </section>
@@ -595,6 +799,7 @@ input[type="color"] { padding: 2px; min-width: 64px; }
   </section>
 </div>
 
+<div id="edge-hint" class="edge-hint" aria-hidden="true" hidden></div>
 <dialog id="dlg" class="dlg"></dialog>
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 <div id="print" class="print"></div>
@@ -632,33 +837,48 @@ function parseBirthNumber(raw) {
    Všetky mená a čísla sú vymyslené. Po obnovení stránky sa stav vráti na začiatok. */
 (function () {
   "use strict";
-  const today = () => {
+  const nowIso = () => {   // čas ambulancie ako RRRR-MM-DDTHH:MM
     const p = {};
-    for (const x of new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Bratislava", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date())) p[x.type] = x.value;
-    return `${p.year}-${p.month}-${p.day}`;
+    for (const x of new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Bratislava", year: "numeric", month: "2-digit", day: "2-digit",
+      hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(new Date())) p[x.type] = x.value;
+    return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}`;
   };
+  const today = () => nowIso().slice(0, 10);
   const addDays = (iso, n) => { const d = new Date(iso + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
+  const weekday = (iso) => new Date(iso + "T12:00:00Z").getUTCDay();
+  const weekend = (iso) => [0, 6].includes(weekday(iso));
   const ms = (s) => Date.parse(s + ":00Z");
   const fromMs = (t) => new Date(t).toISOString().slice(0, 16);
-  const norm = (s) => String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  const ascii = (s) => String(s).normalize("NFD").replace(/[̀-ͯ]/g, "");
+  const norm = (s) => ascii(s).toLowerCase();
+  const hmToMin = (s) => Number(s.slice(0, 2)) * 60 + Number(s.slice(3, 5));
+  const minToHm = (m) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+  const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
   const db = {
     me: null,
-    settings: { clinic_name: "ArtSmile", day_start: "07:00", day_end: "18:00", slot_minutes: 15 },
+    settings: { clinic_name: "ArtSmile", day_start: "07:00", day_end: "18:00", slot_minutes: 15,
+      sms_confirm: true, sms_remind: true, sms_remind_time: "14:00" },
     chairs: [{ id: 1, name: "Kreslo 1", kind: "dental" }, { id: 2, name: "Kreslo 2", kind: "dental" }, { id: 3, name: "Kreslo 3", kind: "dental" }, { id: 4, name: "Hygiena", kind: "hygiene" }],
+    // obedná prestávka sa do kalendára vkladá sama (lunch_days: 1 = pondelok … 5 = piatok)
     providers: [
       { id: 1, name: "Lekár 1", short: "Lekár 1", kind: "doctor", color: "#1f6f8b", chair_id: 1 },
       { id: 2, name: "Lekár 2", short: "Lekár 2", kind: "doctor", color: "#8a5a00", chair_id: 2 },
       { id: 3, name: "Lekár 3", short: "Lekár 3", kind: "doctor", color: "#6b3fa0", chair_id: 3 },
-      { id: 4, name: "Hygienička", short: "Hygiena", kind: "hygienist", color: "#2e7d4f", chair_id: 4 }],
-    types: [["Preventívna prehliadka", 15, "#2e7d4f"], ["Konzultácia", 30, "#1f6f8b"], ["Kontrola", 15, "#5b6b7a"], ["Plomba", 60, "#b26a00"],
-      ["Endodoncia", 90, "#c0392b"], ["Extrakcia", 30, "#6b3fa0"], ["Dentálna hygiena", 60, "#0e8a7e"]]
-      .map(([name, default_minutes, color], i) => ({ id: i + 1, name, default_minutes, color, active: true })),
+      { id: 4, name: "Hygienička", short: "Hygiena", kind: "hygienist", color: "#2e7d4f", chair_id: 4 }]
+      .map((p) => Object.assign(p, { lunch_start: "11:30", lunch_minutes: 30, lunch_days: [1, 2, 3, 4] })),
+    types: [["Preventívna prehliadka", 15, "#2e7d4f", ""], ["Konzultácia", 30, "#1f6f8b", ""], ["Kontrola", 15, "#5b6b7a", ""], ["Plomba", 60, "#b26a00", ""],
+      ["Endodoncia", 90, "#c0392b", "Počítajte prosím s dlhším ošetrením."], ["Extrakcia", 30, "#6b3fa0", "Prineste si prosím zoznam liekov, ktoré užívate."],
+      ["Dentálna hygiena", 60, "#0e8a7e", ""]]
+      .map(([name, default_minutes, color, sms_note], i) => ({ id: i + 1, name, default_minutes, color, sms_note, active: true })),
+    // sestra má „domovský" kalendár svojej ambulancie; zapisovať môže do všetkých
     users: [["Majiteľka", "owner", 1], ["Administrátor", "admin", null], ["Lekár 2", "doctor", 2], ["Lekár 3", "doctor", 3],
-      ["Sestra 1", "nurse", null], ["Sestra 2", "nurse", null], ["Hygienička", "hygienist", 4]]
+      ["Sestra 1", "nurse", 1], ["Sestra 2", "nurse", 2], ["Hygienička", "hygienist", 4]]
       .map(([name, role, provider_id], i) => ({ id: i + 1, name, role, provider_id, active: true })),
-    patients: [], appts: [], audit: [], seq: 100,
+    patients: [], appts: [], audit: [], urgent: [], holds: [], sms: [], lunchDone: new Set(), seq: 100,
   };
+
+  class Err extends Error { constructor(status, detail) { super(detail); this.status = status; } }
 
   function phone(raw) {
     const s = (raw || "").trim();
@@ -695,31 +915,38 @@ function parseBirthNumber(raw) {
     }
     const row = { id: ++db.seq, surname: (p.surname || "").trim(), name: (p.name || "").trim(), title: (p.title || "").trim(),
       birth_number: c.rc.value, birth_year: c.rc.year || p.birth_year || null, phone: c.ph, sms_ok: c.sms,
-      email: (p.email || "").trim().toLowerCase(), note: (p.note || "").trim() };
+      email: (p.email || "").trim().toLowerCase(), note: (p.note || "").trim(), alert: (p.alert || "").trim() };
     db.patients.push(row);
     return row;
   }
-  const pub = (p) => { const o = Object.assign({}, p); delete o.birth_number; return o; };
-  [["Ukážková", "Anna", "0900 000 101", 1979], ["Vzorový", "Peter", "0900 000 102", 1990], ["Skúšobná", "Mária", "0900 000 103", 1965],
-    ["Príkladný", "Tomáš", "0900 000 104", 2001], ["Testovacia", "Eva", "0900 000 105", 1988], ["Modelový", "Jozef", "", 1954],
-    ["Fiktívna", "Zuzana", "0900 000 107", 1996], ["Cvičný", "Martin", "0900 000 108", 1983], ["Vymyslená", "Katarína", "0900 000 109", 1972],
+  const noShows = (pid) => db.appts.filter((a) => a.patient_id === pid && a.status === "no_show").length;
+  const pub = (p) => { const o = Object.assign({}, p); delete o.birth_number; o.no_show_count = noShows(p.id); return o; };
+  // alert = trvalé zdravotné upozornenie (v kalendári červený trojuholník)
+  [["Ukážková", "Anna", "0900 000 101", 1979, "Alergia na penicilín"], ["Vzorový", "Peter", "0900 000 102", 1990], ["Skúšobná", "Mária", "0900 000 103", 1965],
+    ["Príkladný", "Tomáš", "0900 000 104", 2001, "Silný dávivý reflex"], ["Testovacia", "Eva", "0900 000 105", 1988], ["Modelový", "Jozef", "", 1954],
+    ["Fiktívna", "Zuzana", "0900 000 107", 1996], ["Cvičný", "Martin", "0900 000 108", 1983],
+    ["Vymyslená", "Katarína", "0900 000 109", 1972, "Alergia na lokálne anestetikum (artikaín)"],
     ["Skúšobný", "Ján", "0900 000 110", 1984], ["Náhodný", "Lukáš", "0900 000 111", 2010], ["Ilustračná", "Veronika", "0900 000 112", 1993]]
-    .forEach(([surname, name, ph, birth_year]) => addPatient({ surname, name, phone: ph, birth_year }, true));
+    .forEach(([surname, name, ph, birth_year, alert]) => addPatient({ surname, name, phone: ph, birth_year, alert }, true));
 
   const plan = [[1, "07:30", 1, "confirmed"], [1, "08:00", 4, "confirmed"], [1, "09:15", 3, "unconfirmed"], [1, "10:00", 5, "unconfirmed"],
     [1, "13:30", 2, "unconfirmed"], [2, "08:00", 4, "confirmed"], [2, "09:30", 6, "unconfirmed"], [2, "10:15", 1, "confirmed"], [2, "14:00", 4, "unconfirmed"],
     [3, "08:30", 2, "unconfirmed"], [3, "10:00", 4, "confirmed"], [3, "13:00", 5, "confirmed"], [4, "08:00", 7, "unconfirmed"], [4, "10:00", 7, "confirmed"], [4, "13:00", 7, "unconfirmed"]];
   for (let d = -9; d < 22; d++) {
-    const day = addDays(today(), d), wd = new Date(day + "T12:00:00Z").getUTCDay();
-    if (wd === 0 || wd === 6) continue;   // víkend je voľný
+    const day = addDays(today(), d);
+    if (weekend(day)) continue;   // víkend je voľný
     plan.forEach(([prov, time, type, status], i) => {
       if ((i + d) % 5 === 4) return;   // každý deň vyzerá trochu inak
       db.appts.push({ id: ++db.seq, kind: "appointment", provider_id: prov, chair_id: prov, patient_id: db.patients[(((i * 5 + d * 3) % db.patients.length) + db.patients.length) % db.patients.length].id,
         label: "", type_id: (i + d) % 4 === 1 ? null : type, status: d < 0 ? (i % 7 === 3 ? "no_show" : "done") : status,
         note: i === 3 ? "prísť o 10 min skôr" : i === 8 ? "dorobiť RTG" : "", source: "staff", start: `${day}T${time}`, minutes: db.types[type - 1].default_minutes });
     });
-    db.appts.push({ id: ++db.seq, kind: "block", provider_id: 1, chair_id: 1, patient_id: null, label: "Obed", type_id: null, status: "confirmed", note: "", source: "staff", start: `${day}T12:00`, minutes: 60 });
   }
+  // akútni pacienti bez pevného termínu: fronta na zavolanie
+  const ago = (min) => fromMs(ms(nowIso()) - min * 60000);
+  db.urgent.push(
+    { id: ++db.seq, name: "Peter", surname: "Náhly", phone: "+421900000201", provider_id: 1, note: "Opuch vľavo dole, bolesť od rána", created_at: ago(25), created_by: "Sestra 1", called_at: null, status: "waiting" },
+    { id: ++db.seq, name: "Jana", surname: "Akútna", phone: "+421900000202", provider_id: 2, note: "Vypadnutá plomba, bolí pri jedle", created_at: ago(70), created_by: "Sestra 2", called_at: ago(40), status: "waiting" });
 
   // živé zmeny: namiesto SSE voláme poslucháčov priamo
   const streams = new Set();
@@ -732,20 +959,65 @@ function parseBirthNumber(raw) {
   const emit = (ev) => setTimeout(() => { for (const es of streams) if (es.onmessage) es.onmessage({ data: JSON.stringify(ev) }); }, 0);
   const changed = (...starts) => emit({ type: "appointments", dates: [...new Set(starts.map((s) => s.slice(0, 10)))] });
 
-  class Err extends Error { constructor(status, detail) { super(detail); this.status = status; } }
   const WRITE_ALL = ["owner", "admin", "nurse"];
   const canWrite = (pid) => WRITE_ALL.includes(db.me.role) || db.me.provider_id === pid;
   const admin = () => { if (!["owner", "admin"].includes(db.me.role)) throw new Err(403, "Na toto nemáte oprávnenie."); };
-  const stamp = () => new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Bratislava", dateStyle: "short", timeStyle: "short" }).format(new Date());
+  const stamp = () => nowIso().replace("T", " ");
   const log = (id, action, data) => db.audit.push({ id, at: stamp(), action, user: db.me.name, data });
+  const tm = (s) => s.slice(11).replace(/^0/, "");
+  const inDay = (a, day) => a.start.slice(0, 10) === day;
 
+  // --- SMS: v ukážke sa nič neposiela, eviduje sa len znenie. Bez diakritiky (dlhšia správa za rovnakú cenu),
+  //     nikdy neobsahuje rodné číslo ani zdravotné upozornenie.
+  const DAYS = ["nedela", "pondelok", "utorok", "streda", "stvrtok", "piatok", "sobota"];
+  function smsText(a, kind) {
+    const prov = db.providers.find((p) => p.id === a.provider_id), t = db.types.find((x) => x.id === a.type_id);
+    const day = a.start.slice(0, 10), when = `${Number(day.slice(8))}.${Number(day.slice(5, 7))}. o ${tm(a.start)}`, who = prov ? ` (${ascii(prov.name)})` : "";
+    if (kind === "remind") return `${ascii(db.settings.clinic_name)}: pripominame Vas termin zajtra ${when}${who}. Potvrdte prosim odpovedou ANO. Zmenu nahlaste telefonicky.`;
+    return `${ascii(db.settings.clinic_name)}: mate termin ${when}, ${DAYS[weekday(day)]}${who}.${t && t.sms_note ? " " + ascii(t.sms_note) : ""} Zmenu nahlaste telefonicky.`;
+  }
+  function sendSms(a, kind, at) {
+    const p = db.patients.find((x) => x.id === a.patient_id);
+    if (!p) return null;
+    const rec = { appt_id: a.id, kind, at: at || nowIso(), to: p.phone, text: smsText(a, kind), status: p.sms_ok ? "sent" : "skipped" };
+    db.sms.push(rec);
+    return rec;
+  }
+  function reminder(a) {   // pripomienka deň vopred o nastavenej hodine
+    if (!db.settings.sms_remind || a.kind !== "appointment" || a.status === "cancelled") return null;
+    const sent = db.sms.find((s) => s.appt_id === a.id && s.kind === "remind");
+    if (sent) return { state: sent.status, at: sent.at };
+    const due = `${addDays(a.start.slice(0, 10), -1)}T${db.settings.sms_remind_time}`, now = nowIso();
+    if (a.start <= now || (a.created_at && a.created_at >= due)) return null;   // už prebehol, alebo zapísaný až po čase pripomienky
+    if (now >= due) { const r = sendSms(a, "remind", due); return { state: r.status, at: due }; }
+    return { state: "planned", at: due };
+  }
+
+  function rangeOf(id) {
+    const days = db.appts.filter((x) => x.range_id === id && x.status !== "cancelled").map((x) => x.start.slice(0, 10)).sort();
+    return days.length ? { from: days[0], to: days[days.length - 1], days: days.length } : null;
+  }
   function view(a) {
     const p = a.patient_id ? db.patients.find((x) => x.id === a.patient_id) : null;
+    const rem = reminder(a);
     return { id: a.id, kind: a.kind, provider_id: a.provider_id, chair_id: a.chair_id, type_id: a.type_id, status: a.status, note: a.note, label: a.label,
       source: a.source, start: a.start, end: fromMs(ms(a.start) + a.minutes * 60000), minutes: a.minutes,
-      patient: p && { id: p.id, surname: p.surname, name: p.name, title: p.title, birth_year: p.birth_year, phone: p.phone, sms_ok: p.sms_ok, email: p.email } };   // bez rodného čísla
+      all_day: !!a.all_day, range_id: a.range_id || null, range: a.range_id ? rangeOf(a.range_id) : null, auto: a.auto || null,
+      sms: db.sms.filter((s) => s.appt_id === a.id).map((s) => ({ kind: s.kind, at: s.at, status: s.status, text: s.text })), sms_reminder: rem,
+      patient: p && { id: p.id, surname: p.surname, name: p.name, title: p.title, birth_year: p.birth_year, phone: p.phone, sms_ok: p.sms_ok, email: p.email,
+        alert: p.alert, no_show_count: noShows(p.id) } };   // bez rodného čísla
   }
-  const tm = (s) => s.slice(11).replace(/^0/, "");
+  const sorted = (rows) => rows.sort((x, y) => x.start.localeCompare(y.start) || x.provider_id - y.provider_id).map(view);
+
+  // --- zámok proti kolíziám: rozpracovaný čas je 2 minúty zablokovaný pre ostatných, klient ho obnovuje
+  const liveHolds = () => (db.holds = db.holds.filter((h) => h.expires > Date.now()));
+  function demoHold(u) {   // ukážka: kolegyňa práve zapisuje termín (zmizne po 3 minútach)
+    const other = db.users.find((x) => x.role === "nurse" && x.id !== u.id);
+    let day = addDays(today(), 1);
+    while (weekend(day)) day = addDays(day, 1);
+    db.holds = [{ provider_id: u.provider_id || 1, start: `${day}T15:00`, minutes: 30, user_id: other.id, user: other.name, expires: Date.now() + 180000 }];
+  }
+
   function conflict(c, skip) {
     const s = ms(c.start), e = s + c.minutes * 60000;
     for (const a of db.appts) {
@@ -754,12 +1026,48 @@ function parseBirthNumber(raw) {
       if (as >= e || ae <= s) continue;
       const byProv = a.provider_id === c.provider_id, byChair = c.chair_id !== null && a.chair_id === c.chair_id;
       if (!byProv && !byChair) continue;
+      if (a.all_day) throw new Err(409, `Ošetrujúci má v tento deň voľno (${a.label || "blokovanie"}).`);
       const v = view(a), who = v.patient ? `${v.patient.surname} ${v.patient.name}`.trim() : (a.label || "blokovanie");
       throw new Err(409, `Čas je obsadený: ${byProv ? "ošetrujúci už má termín" : "kreslo je obsadené"} ${tm(v.start)}–${tm(v.end)} (${who}).`);
     }
+    if (c.kind === "block" || !db.me) return;
+    for (const h of liveHolds()) {
+      if (h.user_id === db.me.id || h.provider_id !== c.provider_id) continue;
+      const hs = ms(h.start), he = hs + h.minutes * 60000;
+      if (hs < e && he > s) throw new Err(409, `Tento čas práve zapisuje ${h.user}. Zvoľte iný čas alebo chvíľu počkajte.`);
+    }
   }
-  const inDay = (a, day) => a.start.slice(0, 10) === day;
-  const sorted = (rows) => rows.sort((x, y) => x.start.localeCompare(y.start) || x.provider_id - y.provider_id).map(view);
+
+  // --- obedné prestávky: vložia sa samy pri prvom pohľade na deň; ručne upravená alebo zrušená sa už neprepíše
+  function ensureLunch(day) {
+    const wd = weekday(day);
+    for (const p of db.providers) {
+      const key = `${p.id}|${day}`;
+      if (!p.lunch_start || !(p.lunch_days || []).includes(wd) || db.lunchDone.has(key)) continue;
+      db.lunchDone.add(key);
+      const d = { kind: "block", provider_id: p.id, chair_id: null, patient_id: null, label: "Obed", type_id: null, status: "confirmed", note: "",
+        source: "auto", auto: "lunch", start: `${day}T${p.lunch_start}`, minutes: p.lunch_minutes || 30 };
+      try { conflict(d); } catch (e) { continue; }   // v tom čase už niečo je: prestávka sa nevloží
+      d.id = ++db.seq;
+      db.appts.push(d);
+    }
+  }
+  function regenLunch(pid) {   // po zmene nastavenia: budúce neupravené prestávky sa vygenerujú nanovo
+    const t0 = today();
+    for (const key of [...db.lunchDone]) {
+      const [id, day] = key.split("|");
+      if (Number(id) !== pid || day < t0) continue;
+      const mine = db.appts.filter((a) => a.auto === "lunch" && a.provider_id === pid && inDay(a, day));
+      if (mine.some((a) => a.touched) || db.appts.some((a) => a.all_day && a.status !== "cancelled" && a.provider_id === pid && inDay(a, day))) continue;
+      db.appts = db.appts.filter((a) => !mine.includes(a));
+      db.lunchDone.delete(key);
+    }
+  }
+
+  try {   // obnovenie stránky (napr. nechcené potiahnutie) v ukážke neodhlási
+    const u = db.users.find((x) => x.id === Number(sessionStorage.getItem("demo-user")));
+    if (u) { db.me = u; demoHold(u); }
+  } catch (e) { /* bez úložiska */ }
 
   function route(method, path, q, body) {
     let m;
@@ -768,9 +1076,15 @@ function parseBirthNumber(raw) {
       const u = db.users.find((x) => x.id === body.user_id && x.active);
       if (!u || !/^\d{4,8}$/.test(body.pin || "")) throw new Err(401, "Nesprávne meno alebo PIN.");
       db.me = u;
+      demoHold(u);
+      try { sessionStorage.setItem("demo-user", String(u.id)); } catch (e) { /* bez úložiska */ }
       return { id: u.id, name: u.name, role: u.role, provider_id: u.provider_id };
     }
-    if (path === "/api/logout") { db.me = null; return { ok: true }; }
+    if (path === "/api/logout") {
+      db.me = null;
+      try { sessionStorage.removeItem("demo-user"); } catch (e) { /* bez úložiska */ }
+      return { ok: true };
+    }
     if (!db.me) throw new Err(401, "Neprihlásený.");
 
     if (path === "/api/bootstrap") return { user: { id: db.me.id, name: db.me.name, role: db.me.role, provider_id: db.me.provider_id },
@@ -790,17 +1104,18 @@ function parseBirthNumber(raw) {
     if ((m = path.match(/^\/api\/patients\/(\d+)$/))) {
       const p = db.patients.find((x) => x.id === Number(m[1]));
       if (!p) throw new Err(404, "Pacient neexistuje.");
-      if (method === "GET") return Object.assign({}, p);   // detail pacienta: jediné miesto s rodným číslom
+      if (method === "GET") return Object.assign({ no_show_count: noShows(p.id) }, p);   // detail pacienta: jediné miesto s rodným číslom
       const c = checkPatient(body, p.id);
       if (!c.ph && p.phone) throw new Err(422, "Telefón sa nedá vymazať, bez neho sa pacient nedá objednať.");
       Object.assign(p, { surname: body.surname.trim(), name: (body.name || "").trim(), title: (body.title || "").trim(),
         birth_number: c.rc.value, birth_year: c.rc.year || (c.rc.value ? null : p.birth_year),
-        phone: c.ph, sms_ok: c.sms, email: (body.email || "").trim().toLowerCase(), note: (body.note || "").trim() });
+        phone: c.ph, sms_ok: c.sms, email: (body.email || "").trim().toLowerCase(), note: (body.note || "").trim(),
+        alert: body.alert != null ? body.alert.trim() : p.alert });
       emit({ type: "patients" });
-      return Object.assign({}, p);
+      return Object.assign({ no_show_count: noShows(p.id) }, p);
     }
     if ((m = path.match(/^\/api\/patients\/(\d+)\/appointments$/))) {
-      // budúce termíny (od dnes, aspoň do konca roka), staršie po stránkach cez ?before=
+      // budúce termíny (od dnes, aspoň do konca roka), staršie po stránkach cez ?before=; stats = dochádzka
       const mine = db.appts.filter((a) => a.patient_id === Number(m[1]) && a.status !== "cancelled");
       const from = today() + "T00:00", before = q.get("before");
       if (before) {
@@ -808,13 +1123,15 @@ function parseBirthNumber(raw) {
         const limit = Math.min(Number(q.get("limit")) || 10, 50);
         return { items: older.slice(0, limit).reverse(), has_older: older.length > limit };
       }
-      return { items: sorted(mine.filter((a) => a.start >= from)), has_older: mine.some((a) => a.start < from) };
+      return { items: sorted(mine.filter((a) => a.start >= from)), has_older: mine.some((a) => a.start < from),
+        stats: { visits: mine.filter((a) => a.status === "done").length, no_show: mine.filter((a) => a.status === "no_show").length } };
     }
 
     if (path === "/api/appointments" && method === "GET") {
-      // deň celej ambulancie, alebo s ?days=7&provider_id= týždeň jedného ošetrujúceho
+      // deň celej ambulancie, alebo s ?days=7&provider_id= sedem dní jedného ošetrujúceho
       const day = q.get("date") || today(), days = Math.min(Math.max(Number(q.get("days")) || 1, 1), 31), pid = Number(q.get("provider_id")) || null;
       const to = addDays(day, days);
+      for (let d = day; d < to; d = addDays(d, 1)) ensureLunch(d);
       return sorted(db.appts.filter((a) => a.status !== "cancelled" && a.start.slice(0, 10) >= day && a.start.slice(0, 10) < to && (!pid || a.provider_id === pid)));
     }
     if (path === "/api/day-list") {   // zoznam na obvolanie: všetci objednaní na deň, nielen nepotvrdení
@@ -822,9 +1139,112 @@ function parseBirthNumber(raw) {
       return { date: day, items: sorted(db.appts.filter((a) => a.kind === "appointment" && a.status !== "cancelled" && inDay(a, day) && (!pid || a.provider_id === pid))) };
     }
     if (path === "/api/unconfirmed") {
-      const day = q.get("date") || addDays(today(), 1);
-      return { date: day, items: sorted(db.appts.filter((a) => a.kind === "appointment" && a.status === "unconfirmed" && inDay(a, day))) };
+      const day = q.get("date") || addDays(today(), 1), pid = Number(q.get("provider_id")) || null;
+      return { date: day, items: sorted(db.appts.filter((a) => a.kind === "appointment" && a.status === "unconfirmed" && inDay(a, day) && (!pid || a.provider_id === pid))) };
     }
+    if (path === "/api/free-slot") {   // najbližší voľný čas v ordinačných hodinách, od zadaného okamihu
+      const need = Math.max(5, Number(q.get("minutes")) || 15), pid = Number(q.get("provider_id")) || null;
+      let from = q.get("from") || nowIso();
+      if (from < nowIso()) from = nowIso();
+      const ds = hmToMin(db.settings.day_start), de = hmToMin(db.settings.day_end);
+      const span = (x) => [hmToMin(x.start.slice(11)), hmToMin(x.start.slice(11)) + x.minutes];
+      for (let i = 0, day = from.slice(0, 10); i < 180; i++, day = addDays(day, 1)) {
+        if (weekend(day)) continue;
+        ensureLunch(day);
+        let best = null;
+        for (const p of db.providers.filter((x) => !pid || x.id === pid)) {
+          let t = day === from.slice(0, 10) ? Math.max(ds, Math.ceil(hmToMin(from.slice(11)) / 15) * 15) : ds, found = null;
+          const busy = [...db.appts.filter((a) => a.status !== "cancelled" && a.provider_id === p.id && inDay(a, day)),
+            ...liveHolds().filter((h) => h.user_id !== db.me.id && h.provider_id === p.id && inDay(h, day))].map(span).sort((x, y) => x[0] - y[0]);
+          for (const [s, e] of busy) {
+            if (s - t >= need) { found = [t, s]; break; }
+            if (e > t) t = e;
+          }
+          if (!found && de - t >= need) found = [t, de];
+          if (found && (!best || found[0] < best.at)) best = { at: found[0], provider_id: p.id, start: `${day}T${minToHm(found[0])}`, free_minutes: found[1] - found[0] };
+        }
+        if (best) return best;
+      }
+      throw new Err(404, "V najbližšom polroku nie je voľný termín.");
+    }
+
+    if (path === "/api/urgent" && method === "GET") return db.urgent.filter((u) => u.status === "waiting").sort((a, b) => a.created_at.localeCompare(b.created_at));
+    if (path === "/api/urgent" && method === "POST") {
+      if (!(body.surname || "").trim()) throw new Err(422, "Doplňte priezvisko.");
+      const [ph] = phone(body.phone);
+      if (!ph.startsWith("+")) throw new Err(422, "Doplňte telefón, na ktorý pacientovi zavoláte.");
+      if (!db.providers.some((p) => p.id === body.provider_id)) throw new Err(422, "Vyberte ošetrujúceho.");
+      const u = { id: ++db.seq, name: (body.name || "").trim(), surname: body.surname.trim(), phone: ph, provider_id: body.provider_id, note: (body.note || "").trim(),
+        created_at: nowIso(), created_by: db.me.name, called_at: null, status: "waiting" };
+      db.urgent.push(u);
+      emit({ type: "urgent" });
+      return u;
+    }
+    if ((m = path.match(/^\/api\/urgent\/(\d+)$/))) {
+      const u = db.urgent.find((x) => x.id === Number(m[1]));
+      if (!u) throw new Err(404, "Záznam neexistuje.");
+      if ("called" in body) u.called_at = body.called ? nowIso() : null;
+      if (body.provider_id) u.provider_id = body.provider_id;
+      if (body.note != null) u.note = body.note.trim();
+      if (body.status) Object.assign(u, { status: body.status, closed_at: nowIso(), closed_by: db.me.name });
+      emit({ type: "urgent" });
+      return u;
+    }
+
+    if (path === "/api/holds" && method === "GET") {
+      const day = q.get("date") || today(), to = addDays(day, Math.min(Math.max(Number(q.get("days")) || 1, 1), 31));
+      return liveHolds().filter((h) => h.user_id !== db.me.id && h.start.slice(0, 10) >= day && h.start.slice(0, 10) < to)
+        .map((h) => ({ provider_id: h.provider_id, start: h.start, minutes: h.minutes, user: h.user, expires_in: Math.ceil((h.expires - Date.now()) / 1000) }));
+    }
+    if (path === "/api/holds" && method === "POST") {
+      if (!canWrite(body.provider_id)) throw new Err(403, "Do tohto kalendára nemôžete zapisovať.");
+      db.holds = liveHolds().filter((h) => h.user_id !== db.me.id);   // jeden rozpracovaný čas na používateľa
+      ensureLunch(body.start.slice(0, 10));
+      conflict({ kind: "appointment", provider_id: body.provider_id, chair_id: null, start: body.start, minutes: body.minutes });
+      db.holds.push({ provider_id: body.provider_id, start: body.start, minutes: body.minutes, user_id: db.me.id, user: db.me.name, expires: Date.now() + 120000 });
+      emit({ type: "holds", by: db.me.id });
+      return { ok: true, expires_in: 120 };
+    }
+    if (path === "/api/holds" && method === "DELETE") {
+      db.holds = db.holds.filter((h) => h.user_id !== db.me.id);
+      emit({ type: "holds", by: db.me.id });
+      return { ok: true };
+    }
+
+    if (path === "/api/blocks/range" && method === "POST") {   // dovolenka: celé pracovné dni od–do; s check=true len spočíta
+      const pid = body.provider_id;
+      if (!db.providers.some((p) => p.id === pid) || !canWrite(pid)) throw new Err(403, "Do tohto kalendára nemôžete zapisovať.");
+      if (!DATE.test(body.from || "") || !DATE.test(body.to || "") || body.to < body.from) throw new Err(422, "Zadajte prvý a posledný deň (posledný nesmie byť skôr ako prvý).");
+      const days = [];
+      for (let d = body.from; d <= body.to && days.length <= 130; d = addDays(d, 1)) if (!weekend(d)) days.push(d);
+      if (!days.length) throw new Err(422, "V zadanom období nie je žiadny pracovný deň.");
+      if (days.length > 130) throw new Err(422, "Naraz sa dá zablokovať najviac pol roka.");
+      if (days.some((d) => db.appts.some((a) => a.all_day && a.status !== "cancelled" && a.provider_id === pid && inDay(a, d))))
+        throw new Err(409, "V tomto období už je zadané voľno. Najprv ho zrušte alebo zvoľte iné dni.");
+      const hit = db.appts.filter((a) => a.kind === "appointment" && a.status !== "cancelled" && a.provider_id === pid && days.includes(a.start.slice(0, 10)))
+        .sort((x, y) => x.start.localeCompare(y.start));
+      if (body.check) return { days: days.length, conflicts: hit.length, first: hit.length ? hit[0].start : null };
+      const range_id = ++db.seq, label = (body.label || "").trim() || "Dovolenka";
+      const minutes = hmToMin(db.settings.day_end) - hmToMin(db.settings.day_start);
+      for (const day of days) {
+        db.lunchDone.add(`${pid}|${day}`);   // počas voľna sa obed nevkladá
+        for (const a of db.appts) if (a.auto === "lunch" && !a.touched && a.provider_id === pid && inDay(a, day)) a.status = "cancelled";
+        db.appts.push({ id: ++db.seq, kind: "block", all_day: true, range_id, provider_id: pid, chair_id: null, patient_id: null, label, type_id: null,
+          status: "confirmed", note: "", source: "staff", start: `${day}T${db.settings.day_start}`, minutes });
+        log(db.seq, "create", {});
+      }
+      changed(...days.map((d) => d + "T00:00"));
+      return { range_id, days: days.length };
+    }
+    if ((m = path.match(/^\/api\/blocks\/range\/(\d+)$/))) {   // zrušenie celého obdobia voľna
+      const rows = db.appts.filter((a) => a.range_id === Number(m[1]) && a.status !== "cancelled");
+      if (!rows.length) throw new Err(404, "Voľno už neexistuje.");
+      if (!canWrite(rows[0].provider_id)) throw new Err(403, "Toto voľno nemôžete meniť.");
+      for (const a of rows) { a.status = "cancelled"; db.lunchDone.delete(`${a.provider_id}|${a.start.slice(0, 10)}`); }
+      changed(...rows.map((a) => a.start));
+      return { ok: true, days: rows.length };
+    }
+
     if (path === "/api/appointments" && method === "POST") {
       if (!canWrite(body.provider_id)) throw new Err(403, "Do tohto kalendára nemôžete zapisovať.");
       const prov = db.providers.find((p) => p.id === body.provider_id);
@@ -841,20 +1261,30 @@ function parseBirthNumber(raw) {
       }
       const drafts = starts.map((start) => ({ kind, provider_id: prov.id, chair_id: chair, patient_id: null, label: (body.label || "").trim(),
         type_id: kind === "appointment" ? body.type_id || null : null, status: kind === "appointment" ? "unconfirmed" : "confirmed",
-        note: (body.note || "").trim(), source: "staff", start, minutes: body.minutes }));
+        note: (body.note || "").trim(), source: "staff", start, minutes: body.minutes, created_at: nowIso() }));
       drafts.forEach((d, i) => {
+        ensureLunch(d.start.slice(0, 10));
         try { conflict(d); } catch (e) { const parts = d.start.slice(0, 10).split("-"); throw new Err(409, `${parts[2]}.${parts[1]}. ${d.start.slice(11)}: ${e.message}`); }
         for (let j = 0; j < i; j++) if (Math.abs(ms(drafts[j].start) - ms(d.start)) < d.minutes * 60000) throw new Err(409, "Zadané termíny sa navzájom prekrývajú.");
       });
       const pid = kind === "appointment" ? (body.patient_id || (body.new_patient ? addPatient(body.new_patient).id : null)) : null;
-      drafts.forEach((d) => { d.id = ++db.seq; d.patient_id = pid; db.appts.push(d); log(d.id, "create", {}); });
+      drafts.forEach((d) => {
+        d.id = ++db.seq; d.patient_id = pid; db.appts.push(d); log(d.id, "create", {});
+        if (kind === "appointment" && db.settings.sms_confirm && body.send_sms !== false && d.start > nowIso()) sendSms(d, "confirm");   // okamžité potvrdenie
+      });
+      db.holds = db.holds.filter((h) => h.user_id !== db.me.id);   // uložením sa zámok uvoľní
+      if (body.urgent_id) {   // akútny pacient preklopený do termínu
+        const u = db.urgent.find((x) => x.id === body.urgent_id);
+        if (u) Object.assign(u, { status: "scheduled", closed_at: nowIso(), closed_by: db.me.name, appointment_id: drafts[0].id });
+        emit({ type: "urgent" });
+      }
       changed(...starts);
       return sorted(drafts);
     }
     if ((m = path.match(/^\/api\/appointments\/(\d+)$/))) {
       const a = db.appts.find((x) => x.id === Number(m[1]));
       if (!a) throw new Err(404, "Termín neexistuje.");
-      const keys = Object.keys(body), onlyStatus = keys.every((k) => k === "status") && ["confirmed", "unconfirmed"].includes(body.status);
+      const keys = Object.keys(body), onlyStatus = keys.every((k) => k === "status") && ["confirmed", "unconfirmed"].includes(body.status) && a.status !== "done";
       const target = body.provider_id || a.provider_id;
       if (onlyStatus) { if (db.me.role === "hygienist" && db.me.provider_id !== a.provider_id) throw new Err(403, "Potvrdzovať môžete len svoje termíny."); }
       else if (!(canWrite(a.provider_id) && canWrite(target))) throw new Err(403, "Tento termín nemôžete meniť.");
@@ -862,7 +1292,7 @@ function parseBirthNumber(raw) {
       const next = Object.assign({}, a, { provider_id: target, start: body.start || a.start, minutes: body.minutes || a.minutes, status: body.status || a.status });
       if (body.clear_chair) next.chair_id = null;
       else if (body.chair_id != null) next.chair_id = body.chair_id;
-      else if (target !== a.provider_id) next.chair_id = db.providers.find((p) => p.id === target).chair_id;
+      else if (target !== a.provider_id && a.chair_id !== null) next.chair_id = db.providers.find((p) => p.id === target).chair_id;
       if (body.patient_id != null) {
         if (!(db.patients.find((p) => p.id === body.patient_id) || {}).phone) throw new Err(422, "Pacient nemá telefón. Doplňte ho, bez neho sa termín neuloží.");
         next.patient_id = body.patient_id;
@@ -870,7 +1300,11 @@ function parseBirthNumber(raw) {
       if (body.label != null) next.label = body.label.trim();
       if ("type_id" in body) next.type_id = body.type_id;
       if (body.note != null) next.note = body.note.trim();
-      if (next.status !== "cancelled") conflict(next, a.id);
+      // kolízia sa kontroluje len pri zmene času, dĺžky, ošetrujúceho alebo kresla (zmena stavu prejde aj počas voľna)
+      const moved = next.start !== a.start || next.minutes !== a.minutes || next.provider_id !== a.provider_id || next.chair_id !== a.chair_id;
+      if (moved && next.status !== "cancelled") { ensureLunch(next.start.slice(0, 10)); conflict(next, a.id); }
+      if (a.auto) next.touched = true;   // ručne upravenú prestávku už automat neprepíše
+      if (a.all_day && next.status === "cancelled") db.lunchDone.delete(`${a.provider_id}|${a.start.slice(0, 10)}`);
       Object.assign(a, next);
       log(a.id, onlyStatus || keys.join() === "status" ? "status" : "update", { before, after: { provider_id: a.provider_id, chair_id: a.chair_id, start: a.start, minutes: a.minutes, status: a.status } });
       changed(before.start, a.start);
@@ -902,7 +1336,15 @@ function parseBirthNumber(raw) {
     }
     if (path === "/api/admin/types" && method === "POST") { const t = Object.assign({ id: ++db.seq }, body); db.types.push(t); emit({ type: "config" }); return t; }
     if ((m = path.match(/^\/api\/admin\/types\/(\d+)$/))) { Object.assign(db.types.find((t) => t.id === Number(m[1])), body); emit({ type: "config" }); return { ok: true }; }
-    if ((m = path.match(/^\/api\/admin\/providers\/(\d+)$/))) { Object.assign(db.providers.find((p) => p.id === Number(m[1])), body); emit({ type: "config" }); return { ok: true }; }
+    if ((m = path.match(/^\/api\/admin\/providers\/(\d+)$/))) {
+      const p = db.providers.find((x) => x.id === Number(m[1]));
+      if (body.lunch_start && !(body.lunch_minutes >= 10 && body.lunch_minutes <= 180)) throw new Err(422, "Dĺžka obednej prestávky musí byť 10 až 180 minút.");
+      const lunch = JSON.stringify([p.lunch_start, p.lunch_minutes, p.lunch_days]);
+      Object.assign(p, body);
+      if (JSON.stringify([p.lunch_start, p.lunch_minutes, p.lunch_days]) !== lunch) { regenLunch(p.id); changed(today() + "T00:00"); }
+      emit({ type: "config" });
+      return { ok: true };
+    }
     if (path === "/api/admin/settings") {
       if (body.day_end <= body.day_start) throw new Err(422, "Koniec dňa musí byť po začiatku.");
       Object.assign(db.settings, body); emit({ type: "config" }); return { ok: true };
@@ -1028,7 +1470,7 @@ function clinicNow() {   // dnešný dátum a minúty od polnoci v čase ambulan
 }
 
 const ROLE = { owner: "Majiteľka", admin: "Administrátor", doctor: "Lekár", nurse: "Sestra", hygienist: "Hygienička" };
-const STATUS = { unconfirmed: "Nepotvrdený", confirmed: "Potvrdený", done: "Prišiel", no_show: "Neprišiel", cancelled: "Zrušený" };
+const STATUS = { unconfirmed: "Nepotvrdený", confirmed: "Potvrdený", done: "Ošetrený", no_show: "Neprišiel", cancelled: "Zrušený" };
 // Farby kategórií: pripravená paleta, aby text na bloku bol vždy čitateľný.
 const PALETTE = [["#2e7d4f", "zelená"], ["#0e8a7e", "tyrkysová"], ["#1f6f8b", "petrolejová"], ["#2f5bd3", "modrá"], ["#6b3fa0", "fialová"],
   ["#b8327a", "purpurová"], ["#c0392b", "červená"], ["#b26a00", "oranžová"], ["#7a5c2e", "hnedá"], ["#5b6b7a", "sivá"]];
@@ -1048,16 +1490,19 @@ const S = {
   boot: null,          // odpoveď /api/bootstrap
   view: "calendar",
   date: null,          // zobrazený deň
-  calMode: "day",      // day = deň ambulancie | week = týždeň jedného ošetrujúceho
-  only: null,          // id ošetrujúceho, keď je v dni zobrazený len jeden
-  weekProv: null,      // ošetrujúci v týždennom pohľade
-  appts: [],
+  calMode: "week",     // week = týždeň jedného ošetrujúceho od zobrazeného dňa | day = deň ambulancie
+  prov: null,          // ošetrujúci zvolený v hornom menu (null = všetci)
+  lastProv: null,      // naposledy zvolený, keď sa z dňa všetkých prejde späť na týždeň
+  appts: [], holds: [], urgent: [],
+  place: null,         // umiestnenie ťuknutím: presun termínu alebo zaradenie akútneho pacienta
+  myHold: null, holdKey: "", dialogHold: null,   // zámok rozpracovaného času
+  afterRender: null, forceRender: false,
   scrollFor: null,     // pohľad, pre ktorý sa už kalendár posunul na aktuálny čas
   geo: null, colEls: new Map(),
   draft: null, draftEls: null,     // rozpracovaný blok pri zápise ťahaním
   drag: null, touchLock: false, suppressClick: 0, lastDragEnd: 0, renderLater: false, swipeDir: 0,
   focusAppt: null, loadKey: null,
-  tmDate: null, tmProv: null, tmKey: null,
+  tmDate: null, tmKey: null,
   es: null, idleTimer: null,
 };
 
@@ -1157,11 +1602,13 @@ async function enterApp() {
   $("login").hidden = true;
   $("shell").hidden = false;
   applyBoot();
-  if (S.only === null && (narrow() || !WRITE_ALL.includes(S.boot.user.role)) && S.boot.user.provider_id) S.only = S.boot.user.provider_id;
+  // po prihlásení sa otvára týždeň vlastnej ambulancie, nie deň všetkých
+  if (!provider(S.prov)) { S.prov = homeProv(); S.lastProv = S.prov; }
   showView(S.view === "settings" && !isAdmin() ? "calendar" : S.view);
   connectEvents();
   resetIdle();
   refreshTomorrowCount();
+  loadUrgent();
 }
 
 function applyBoot() {
@@ -1177,11 +1624,12 @@ function leaveApp() {
   if (S.es) { S.es.close(); S.es = null; }
   clearTimeout(S.idleTimer);
   if ($("dlg").open) $("dlg").close();
-  S.boot = null; S.appts = []; S.only = null; S.view = "calendar"; S.date = null; S.scrollFor = null;
-  S.calMode = "day"; S.weekProv = null; S.draft = null; S.drag = null; S.touchLock = false; S.geo = null; S.tmProv = null; S.tmDate = null;
+  Object.assign(S, { boot: null, appts: [], holds: [], urgent: [], prov: null, lastProv: null, view: "calendar", date: null, scrollFor: null, calMode: "week",
+    draft: null, drag: null, touchLock: false, geo: null, place: null, dialogHold: null, myHold: null, holdKey: "", afterRender: null, forceRender: false, tmDate: null });
   document.title = "Objednávacia kniha";
-  fill($("cal"), );
-  fill($("tm-list"), ); fill($("pt-list"), ); fill($("settings-body"), );
+  fill($("cal"));
+  fill($("tm-list")); fill($("pt-list")); fill($("settings-body"));
+  for (const id of ["urgent-bar", "place-bar", "prov-pick", "edge-hint"]) $(id).hidden = true;
   $("pt-search").value = "";
 }
 
@@ -1206,8 +1654,9 @@ function connectEvents() {
   es.onerror = () => { wasDown = true; setOffline(true); };
   es.onmessage = (m) => {
     let ev; try { ev = JSON.parse(m.data); } catch (e) { return; }
+    if (!S.boot) return;
     if (ev.type === "appointments") {
-      const shown = S.calMode === "week" ? weekDates(S.date) : [S.date];
+      const shown = S.calMode === "week" ? spanDates(S.date) : [S.date];
       if (S.view === "calendar" && ev.dates.some((d) => shown.includes(d))) loadDay();
       if (S.view === "tomorrow" && ev.dates.includes(S.tmDate)) loadTomorrow();
       refreshTomorrowCount();
@@ -1215,6 +1664,10 @@ function connectEvents() {
       api("GET", "/api/bootstrap").then((b) => { S.boot = b; applyBoot(); refreshAll(); }).catch(() => {});
     } else if (ev.type === "patients") {
       if (S.view === "calendar") loadDay();
+    } else if (ev.type === "urgent") {
+      loadUrgent();
+    } else if (ev.type === "holds") {   // kolega začal alebo skončil zápis na inom zariadení
+      if (ev.by !== S.boot.user.id && S.view === "calendar") loadDay();
     }
   };
 }
@@ -1225,6 +1678,7 @@ function refreshAll() {
   else if (S.view === "tomorrow") loadTomorrow();
   else if (S.view === "settings") loadSettings();
   refreshTomorrowCount();
+  loadUrgent();
 }
 
 function showView(name) {
@@ -1233,6 +1687,7 @@ function showView(name) {
   for (const t of document.querySelectorAll(".tab")) {
     if (t.dataset.view === name) t.setAttribute("aria-current", "page"); else t.removeAttribute("aria-current");
   }
+  renderProvPick();
   if (name === "calendar") loadDay();
   else if (name === "tomorrow") { S.tmDate = null; loadTomorrow(); }
   else if (name === "patients") { searchPatients(); $("pt-search").focus(); }
@@ -1240,113 +1695,157 @@ function showView(name) {
 }
 
 // ------------------------------------------------------------------ kalendár
-// Deň ambulancie (stĺpec na ošetrujúceho) alebo týždeň jedného ošetrujúceho
-// (stĺpec na deň). Rovnaké bloky, ťahanie aj čiara aktuálneho času.
+// Predvolený je týždeň jedného ošetrujúceho: prvý stĺpec je zobrazený deň (po prihlásení
+// dnešok), ďalej pracovné dni dopredu. Deň ambulancie ukazuje všetkých vedľa seba.
 
-const STEP = 15;          // ťahanie a presun po 15 minútach
-const DEFAULT_LEN = 30;   // ťuknutie vytvorí blok s touto dĺžkou
+const STEP = 15;            // ťahanie a presun po 15 minútach
+const DEFAULT_LEN = 30;     // ťuknutie vytvorí blok s touto dĺžkou
+const HOLD_MOVE_MS = 1500;  // prstom sa termín presúva až po dlhom podržaní, aby sa nepohol pri posúvaní obrazovky
+const HOLD_GRIP_MS = 400;   // zmena dĺžky prstom: krátke podržanie úchytu
 let uidSeq = 0;
 
 const wdFmt = new Intl.DateTimeFormat("sk-SK", { weekday: "short", timeZone: "UTC" });
 const wdShort = (iso) => wdFmt.format(new Date(iso + "T12:00:00Z")).replace(".", "");
 const dm = (iso) => { const [, m, d] = iso.split("-"); return `${Number(d)}. ${Number(m)}.`; };
-function weekStart(iso) { return addDays(iso, -((new Date(iso + "T12:00:00Z").getUTCDay() + 6) % 7)); }
-const weekDates = (iso) => Array.from({ length: 7 }, (_, i) => addDays(weekStart(iso), i));
+const isWeekend = (iso) => [0, 6].includes(new Date(iso + "T12:00:00Z").getUTCDay());
+const dayDiff = (a, b) => Math.round((Date.parse(b + "T12:00:00Z") - Date.parse(a + "T12:00:00Z")) / 86400000);
+const spanDates = (iso) => Array.from({ length: 7 }, (_, i) => addDays(iso, i));
+function workday(iso, dir) { let d = addDays(iso, dir); while (isWeekend(d)) d = addDays(d, dir); return d; }
 const endMin = (a, date) => (a.end.slice(0, 10) > date ? 1440 : toMin(a.end.slice(11)));
 const activeTypes = () => S.boot.types.filter((t) => t.active !== false);
+const nowIso = () => { const n = clinicNow(); return `${n.date}T${hm24(n.min)}`; };
+const fold = (s) => String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
 function visibleDates() {
   if (S.calMode === "day") return [S.date];
-  // pracovné dni vždy, víkend len keď je v ňom niečo zapísané alebo je práve vybraný
-  return weekDates(S.date).filter((d, i) => i < 5 || d === S.date || S.appts.some((a) => a.start.slice(0, 10) === d));
+  // sedem dní od zobrazeného dňa: pracovné dni vždy, víkend len keď je v ňom zapísaný pacient
+  return spanDates(S.date).filter((d) => !isWeekend(d) || S.appts.some((a) => a.kind === "appointment" && a.start.slice(0, 10) === d));
+}
+function stripDates() {   // pás dní v dennom pohľade: od dneška dopredu, ďalšie okná po siedmich dňoch
+  const t = S.boot.today, from = addDays(t, 7 * Math.floor(dayDiff(t, S.date) / 7));
+  return spanDates(from).filter((d) => !isWeekend(d) || d === S.date);
+}
+function homeProv() {   // kalendár, ktorý sa otvorí po prihlásení
+  const B = S.boot;
+  if (provider(S.lastProv)) return S.lastProv;
+  if (provider(B.user.provider_id)) return B.user.provider_id;
+  let saved = null;
+  try { saved = Number(localStorage.getItem("prov:" + B.user.id)); } catch (e) { /* bez úložiska */ }
+  return provider(saved) ? saved : (B.providers[0] || {}).id || null;
 }
 
 async function loadDay() {
   if (!S.boot) return;
   const week = S.calMode === "week";
-  if (week && !provider(S.weekProv)) S.weekProv = S.only || S.boot.user.provider_id || (S.boot.providers[0] || {}).id || null;
-  const from = week ? weekStart(S.date) : S.date;
-  const key = S.loadKey = `${S.calMode}|${from}|${week ? S.weekProv : ""}`;
+  if ((week || narrow()) && !provider(S.prov)) S.prov = homeProv();
+  const key = S.loadKey = `${S.calMode}|${S.date}|${S.prov}`;
   renderToolbar();
   try {
-    const rows = await api("GET", week ? `/api/appointments?date=${from}&days=7&provider_id=${S.weekProv}` : `/api/appointments?date=${from}`);
+    const q = `date=${S.date}&days=${week ? 7 : 1}`;
+    const [rows, holds] = await Promise.all([api("GET", `/api/appointments?${q}${week ? `&provider_id=${S.prov}` : ""}`), api("GET", `/api/holds?${q}`)]);
     if (S.loadKey !== key || !S.boot) return;   // medzitým sa prešlo inam
     S.appts = rows;
+    S.holds = holds.map((x) => Object.assign(x, { until: Date.now() + x.expires_in * 1000 }));
     renderCalendar();
   } catch (e) {
     if (S.boot) toast(e.message, true);
   }
 }
 
+function clearDraft() { S.draft = null; updateDraft(); }
 function setDate(iso) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(iso || "")) return;
   S.date = iso;
-  S.draft = null;
+  clearDraft();
   loadDay();
 }
-function shift(n) { setDate(addDays(S.date, S.calMode === "week" ? 7 * n : n)); }
+function shift(n) { setDate(S.calMode === "week" ? addDays(S.date, 7 * n) : workday(S.date, n)); }
 function setMode(mode) {
   if (mode === S.calMode) return;
-  if (mode === "week") S.weekProv = S.only || S.weekProv || S.boot.user.provider_id || (S.boot.providers[0] || {}).id;
-  else if (narrow()) S.only = S.weekProv || S.only;
-  S.calMode = mode; S.draft = null; S.scrollFor = null;
+  if (mode === "week") { if (!provider(S.prov)) S.prov = homeProv(); }
+  else if (!narrow()) S.prov = null;   // deň = celá ambulancia vedľa seba
+  S.calMode = mode; S.scrollFor = null;
+  clearDraft();
   loadDay();
 }
 function openDay(iso) {   // z hlavičky týždňa na deň ambulancie
-  S.calMode = "day"; S.date = iso; S.draft = null; S.scrollFor = null;
-  if (narrow() || S.only !== null) S.only = S.weekProv;
+  S.calMode = "day"; S.date = iso; S.scrollFor = null;
+  if (!narrow()) S.prov = null;
+  clearDraft();
   loadDay();
+}
+function setProv(v) {   // rozbaľovacie menu v hornej lište
+  S.prov = v ? Number(v) : null;
+  if (S.prov) { S.lastProv = S.prov; try { localStorage.setItem("prov:" + S.boot.user.id, String(S.prov)); } catch (e) { /* bez úložiska */ } }
+  clearDraft();
+  if (S.view === "calendar") {
+    if (S.prov === null && S.calMode === "week") S.calMode = "day";
+    S.scrollFor = null;
+    loadDay();
+  } else if (S.view === "tomorrow") loadTomorrow();
+  refreshTomorrowCount();
+  renderUrgent();
+}
+
+function renderProvPick() {
+  const box = $("prov-pick"), sel = $("prov-select"), B = S.boot;
+  const show = !!B && (S.view === "calendar" || S.view === "tomorrow");
+  box.hidden = !show;
+  if (!show) return;
+  const slot = $(S.view === "tomorrow" ? "tm-prov" : "cal-prov");   // menu je v riadku ovládania práve otvoreného pohľadu
+  if (box.parentNode !== slot) slot.append(box);
+  const opts = B.providers.map((p) => ({ value: p.id, label: p.name }));
+  if (S.view === "tomorrow") opts.unshift({ value: "", label: "Všetci ošetrujúci" });
+  else if (!narrow()) opts.unshift({ value: "", label: "Všetci (deň ambulancie)" });
+  fill(sel, ...opts.map((o) => h("option", { value: String(o.value), text: o.label })));
+  sel.value = S.prov === null ? "" : String(S.prov);
+  const p = provider(S.prov);
+  $("prov-dot").style.setProperty("--c", p ? p.color : "var(--nocat)");
 }
 
 function renderToolbar() {
-  const B = S.boot, week = S.calMode === "week", today = clinicNow().date;
+  const week = S.calMode === "week", today = clinicNow().date;
   $("day-input").value = S.date;
   $("mode-day").setAttribute("aria-pressed", String(!week));
   $("mode-week").setAttribute("aria-pressed", String(week));
-  $("day-prev").setAttribute("aria-label", week ? "Predchádzajúci týždeň" : "Predchádzajúci deň");
-  $("day-next").setAttribute("aria-label", week ? "Nasledujúci týždeň" : "Nasledujúci deň");
-  $("day-today").textContent = week ? "Tento týždeň" : "Dnes";
+  $("day-prev").setAttribute("aria-label", week ? "O týždeň späť" : "Predchádzajúci deň");
+  $("day-next").setAttribute("aria-label", week ? "O týždeň dopredu" : "Nasledujúci deň");
   if (week) {
-    const d = weekDates(S.date), p = provider(S.weekProv);
-    $("day-title").textContent = `Týždeň ${dm(d[0])} – ${dm(d[6])} ${d[6].slice(0, 4)}${p ? " · " + p.name : ""}`;
+    const d = visibleDates(), last = d[d.length - 1] || S.date;   // meno ošetrujúceho je v menu hore
+    $("day-title").textContent = `${dm(d[0] || S.date)} – ${dm(last)} ${last.slice(0, 4)}`;
   } else {
     $("day-title").textContent = fmtDay(S.date) + (S.date === today ? " (dnes)" : "");
   }
   const strip = $("week-strip");
   strip.hidden = week;
   if (!week) {
-    fill(strip, ...weekDates(S.date).map((d) => h("button", { type: "button", class: "wday" + (d === today ? " today" : ""),
+    const ds = stripDates();
+    strip.style.setProperty("--n", ds.length);
+    fill(strip, ...ds.map((d) => h("button", { type: "button", class: "wday" + (d === today ? " today" : ""),
       "aria-current": d === S.date ? "date" : null, "aria-label": fmtDay(d) + (d === today ? ", dnes" : ""), onclick: () => setDate(d) },
       h("small", { text: wdShort(d) }), h("b", { text: Number(d.slice(8)) }))));
   }
-}
-
-function renderProviderBar() {
-  const bar = $("provider-bar"), week = S.calMode === "week", chips = [];
-  if (!week && !narrow()) chips.push(h("button", { type: "button", class: "chip", "aria-pressed": String(S.only === null), text: "Všetci",
-    onclick: () => { S.only = null; S.draft = null; renderCalendar(); } }));
-  for (const p of S.boot.providers) {
-    const on = week ? S.weekProv === p.id : S.only === p.id;
-    chips.push(h("button", { type: "button", class: "chip", "aria-pressed": String(on),
-      onclick: () => {
-        S.draft = null;
-        if (week) { S.weekProv = p.id; if (narrow()) S.only = p.id; loadDay(); } else { S.only = p.id; renderCalendar(); }
-      } }, h("span", { class: "dot", color: p.color }), p.short || p.name));
-  }
-  fill(bar, ...chips);
+  renderProvPick();
 }
 
 function calendarColumns() {
   const B = S.boot;
+  const holdsFor = (pid, date) => S.holds.filter((x) => x.provider_id === pid && x.start.slice(0, 10) === date && x.until > Date.now());
   if (S.calMode === "week") {
-    const p = provider(S.weekProv);
+    const p = provider(S.prov);
     if (!p) return [];
-    return visibleDates().map((d) => ({ key: d, date: d, provider: p, items: S.appts.filter((a) => a.start.slice(0, 10) === d) }));
+    return visibleDates().map((d) => ({ key: d, date: d, provider: p, items: S.appts.filter((a) => a.start.slice(0, 10) === d), holds: holdsFor(p.id, d) }));
   }
-  return B.providers.filter((p) => S.only === null || p.id === S.only).map((p) => ({
+  return B.providers.filter((p) => S.prov === null || p.id === S.prov).map((p) => ({
     key: "p" + p.id, date: S.date, provider: p, name: p.name, color: p.color,
     sub: p.chair_id && chair(p.chair_id) ? chair(p.chair_id).name : "",
-    items: S.appts.filter((a) => a.provider_id === p.id) }));
+    items: S.appts.filter((a) => a.provider_id === p.id), holds: holdsFor(p.id, S.date) }));
+}
+
+// koľko pacientov dnes ešte príde: bez ošetrených, neprítomných a tých, ktorým čas už uplynul
+function remaining(items) {
+  const now = nowIso();
+  return items.filter((a) => a.kind === "appointment" && (a.status === "unconfirmed" || a.status === "confirmed") && a.end > now).length;
 }
 
 const DRAG_KINDS = ["create", "resize", "move", "aresize"];   // gestá, počas ktorých sa kalendár neprekresľuje
@@ -1355,10 +1854,10 @@ const dragging = () => S.drag && DRAG_KINDS.includes(S.drag.kind);
 function renderCalendar() {
   const B = S.boot, cal = $("cal");
   if (!B) return;
-  if (dragging()) { S.renderLater = true; return; }   // neprekresľovať pod prstom
-  if (narrow() && S.calMode === "day" && S.only === null && B.providers.length) S.only = B.user.provider_id || B.providers[0].id;
+  const paging = S.forceRender && S.drag && S.drag.kind === "move";   // listovanie týždňov počas ťahania termínu
+  if (dragging() && !paging) { S.renderLater = true; return; }   // neprekresľovať pod prstom
+  if (narrow() && S.calMode === "day" && S.prov === null && B.providers.length) S.prov = homeProv();
   renderToolbar();
-  renderProviderBar();
   $("print-day").hidden = S.calMode !== "day";
 
   const slot = Number(B.settings.slot_minutes) || 15;
@@ -1379,13 +1878,14 @@ function renderCalendar() {
 
   const nodes = [h("div", { class: "cal-head corner" })];
   for (const c of cols) {
+    const left = c.date === today ? h("small", { class: "left", text: `zostáva ${remaining(c.items)}`, title: "Pacienti, ktorí dnes ešte prídu" }) : null;
     if (week) {
       nodes.push(h("div", { class: "cal-head day" + (c.date === today ? " today" : "") },
         h("button", { type: "button", "aria-label": `${fmtDay(c.date)}: otvoriť deň ambulancie`, onclick: () => openDay(c.date) },
-          h("span", { text: wdShort(c.date) }), h("small", { text: dm(c.date) + (c.date === today ? " dnes" : "") }))));
+          h("span", { text: wdShort(c.date) + (c.date === today ? " dnes" : "") }), h("small", { text: dm(c.date) }), left)));
     } else {
       nodes.push(h("div", { class: "cal-head" }, h("span", { class: "dot", color: c.color }),
-        h("span", { class: "name", text: c.name }), c.sub ? h("small", { text: c.sub }) : null));
+        h("span", { class: "name", text: c.name }), c.sub ? h("small", { text: c.sub }) : null, left));
     }
   }
   if (!cols.length) nodes.push(h("div", { class: "cal-head", text: "Žiadny ošetrujúci" }));
@@ -1408,12 +1908,14 @@ function renderCalendar() {
     el.append(h("div", { class: "past" }));
     if (c.date === today) { el.append(h("div", { class: "nowline" + (dotDone ? "" : " first"), "aria-hidden": "true" })); dotDone = true; }
     for (const a of c.items) add(el, apptNode(a, c, start, end, ppm));   // blok a za ním jeho úchyt dĺžky
+    for (const x of c.holds) el.append(holdNode(x, start, ppm));
     if (writable) el.addEventListener("pointerdown", (e) => onColDown(e, c, el));
     S.colEls.set(c.key, { el, col: c });
     nodes.push(el);
   }
   if (!cols.length) nodes.push(h("div", { class: "empty", text: "V nastaveniach nie je žiadny aktívny ošetrujúci." }));
   fill(cal, ...nodes);
+  if (paging) reattachMove(S.drag);
   if (S.swipeDir) {
     const cls = S.swipeDir > 0 ? "swipe-next" : "swipe-prev";
     cal.classList.remove("swipe-next", "swipe-prev"); void cal.offsetWidth; cal.classList.add(cls);
@@ -1421,14 +1923,16 @@ function renderCalendar() {
   }
   tickNow();
   updateDraft();
+  renderPlaceBar();
+  renderUrgent();
   if (S.calMode === "day") fillPrint();
 
-  const sc = $("cal-scroll"), scrollKey = `${S.calMode}|${week ? weekStart(S.date) : S.date}`;
+  const sc = $("cal-scroll"), scrollKey = `${S.calMode}|${S.date}`;
   if (S.focusAppt) {   // príchod z vyhľadania pacienta: ukázať a zvýrazniť termín
     const n = cal.querySelector(`.appt[data-id="${S.focusAppt}"]`);
     S.focusAppt = null; S.scrollFor = scrollKey;
     if (n) { sc.scrollTop += n.getBoundingClientRect().top - sc.getBoundingClientRect().top - 90; n.classList.add("flash"); }
-  } else if (S.scrollFor !== scrollKey) {   // pri otvorení dňa posunúť na aktuálny čas alebo prvý termín
+  } else if (S.scrollFor !== scrollKey) {   // pri otvorení posunúť na aktuálny čas alebo prvý termín
     S.scrollFor = scrollKey;
     const now = clinicNow();
     let target = null;
@@ -1436,6 +1940,7 @@ function renderCalendar() {
     else if (S.appts.length) target = Math.min(...S.appts.map((a) => toMin(a.start.slice(11)))) - 30;
     sc.scrollTop = target === null ? 0 : Math.max(0, (target - start) * ppm);
   }
+  if (S.afterRender) { const f = S.afterRender; S.afterRender = null; f(); }
 }
 
 // Čiara aktuálneho času a tieň minulosti; volá sa aj časovačom, bez prekreslenia kalendára.
@@ -1458,26 +1963,36 @@ function apptNode(a, c, dayStart, dayEnd, ppm) {
   const top = (Math.max(s, dayStart) - dayStart) * ppm;
   const height = Math.max(18, (Math.min(e, dayEnd) - Math.max(s, dayStart)) * ppm - 2);
   const t = a.type_id ? apptType(a.type_id) : null;
-  const isBlock = a.kind === "block";
-  const meta = [`${hm(s)}–${hm(e)}`];
+  const isBlock = a.kind === "block", allDay = isBlock && a.all_day;
+  const elapsed = !isBlock && (a.status === "unconfirmed" || a.status === "confirmed") && a.end <= nowIso();   // čas už uplynul
+  const meta = [allDay ? "celý deň" : `${hm(s)}–${hm(e)}`];
   if (t) meta.push(t.name);
-  if (a.status === "done" || a.status === "no_show") meta.push(STATUS[a.status]);
+  if (a.status === "done") meta.push("ošetrený");
   if (a.note) meta.push(a.note);
-  const node = h("div", { class: `appt ${a.status}${isBlock ? " block" : ""}${height < 52 ? " short" : ""}`,
+  const node = h("div", { class: `appt ${a.status}${isBlock ? " block" : ""}${allDay ? " allday" : ""}${elapsed ? " elapsed" : ""}${height < 52 ? " short" : ""}`,
     style: `top:${top}px;height:${height}px`, color: isBlock || !t ? null : t.color });
   node.dataset.id = a.id;
-  if (!isBlock && (a.status === "unconfirmed" || a.status === "confirmed")) node.append(ringButton(a));
+  if (!isBlock && a.status !== "no_show") node.append(ringButton(a));
   else if (!isBlock) node.append(h("span", { style: "width:10px" }));
   const body = h("button", { type: "button", class: "appt-body",
-    onclick: () => { if (Date.now() - S.suppressClick > 450) openApptDialog({ appt: a }); },
-    "aria-label": `${hm(s)} ${apptName(a)}, otvoriť termín` },
-    h("span", { class: "appt-name", text: apptName(a) }), h("span", { class: "appt-meta", text: meta.join(" · ") }));
+    onclick: () => {
+      if (Date.now() - S.suppressClick <= 450) return;
+      if (S.place) return toast("Tento čas je obsadený. Ťuknite na voľné miesto.", true);
+      if (allDay) openVacationInfo(a); else openApptDialog({ appt: a });
+    },
+    "aria-label": `${allDay ? "" : hm(s) + " "}${apptName(a)}${a.status === "no_show" ? ", neprišiel" : ""}, otvoriť` },
+    h("span", { class: "appt-name" }, apptName(a), a.status === "no_show" ? h("span", { class: "tag", text: "neprišiel" }) : null),
+    h("span", { class: "appt-meta", text: meta.join(" · ") }));
   node.append(body);
-  if (!canWrite(a.provider_id)) return node;
+  if (a.patient && a.patient.alert) {   // trvalé zdravotné upozornenie pacienta
+    node.append(h("button", { type: "button", class: "warn", title: "Zdravotné upozornenie", "aria-label": `Zdravotné upozornenie: ${apptName(a)}`,
+      onclick: (ev) => { ev.stopPropagation(); openAlert(a.patient); } }));
+  }
+  if (!canWrite(a.provider_id) || allDay) return node;
   body.addEventListener("pointerdown", (ev) => onApptDown(ev, a, node, c));
   // Úchyt na spodnom okraji: ťahaním sa termín predĺži alebo skráti. Je to súrodenec bloku
   // (blok orezáva obsah), siaha kúsok pod blok a nasledujúci termín ho prekryje.
-  const nextS = c.items.reduce((m, x) => { const xs = toMin(x.start.slice(11)); return x.id !== a.id && xs >= e ? Math.min(m, xs) : m; }, dayEnd);
+  const nextS = c.items.reduce((m, x) => { const xs = toMin(x.start.slice(11)); return x.id !== a.id && !x.all_day && xs >= e ? Math.min(m, xs) : m; }, dayEnd);
   const gap = Math.max(0, (Math.min(nextS, dayEnd) - Math.min(e, dayEnd)) * ppm + 2);   // voľné miesto pod blokom
   const outside = Math.round(Math.min(S.geo.coarse ? 16 : 5, gap));
   const inside = Math.round(S.geo.coarse ? Math.min(20, height * 0.4) : Math.min(7, height / 3));
@@ -1489,21 +2004,30 @@ function apptNode(a, c, dayStart, dayEnd, ppm) {
   return [node, grip];
 }
 
+function holdNode(x, dayStart, ppm) {   // čas, ktorý práve zapisuje kolega na inom zariadení
+  const s = toMin(x.start.slice(11));
+  return h("div", { class: "hold", style: `top:${(s - dayStart) * ppm}px;height:${Math.max(18, x.minutes * ppm - 2)}px`, text: `Zapisuje: ${x.user}` });
+}
+
+// Krúžok pred termínom potvrdzuje účasť; po začiatku termínu sa z neho stane štvorček „ošetrený".
 function ringButton(a, big, onDone) {
-  const btn = h("button", { type: "button", class: "ring" + (big ? " big" : ""), "aria-pressed": String(a.status === "confirmed"),
-    "aria-label": a.status === "confirmed" ? `${apptName(a)}: potvrdený, ťuknutím zrušíte potvrdenie` : `${apptName(a)}: potvrdiť termín`,
-    disabled: !canConfirm(a) });
+  const tick = a.status === "done" || a.start <= nowIso();
+  const on = (st) => (tick ? st === "done" : st === "confirmed");
+  const label = tick ? (a.status === "done" ? `${apptName(a)}: ošetrený, ťuknutím vrátite späť` : `${apptName(a)}: označiť ako ošetreného`)
+    : (a.status === "confirmed" ? `${apptName(a)}: potvrdený, ťuknutím zrušíte potvrdenie` : `${apptName(a)}: potvrdiť termín`);
+  const btn = h("button", { type: "button", class: "ring" + (tick ? " tick" : "") + (big ? " big" : ""), "aria-pressed": String(on(a.status)),
+    "aria-label": label, title: tick ? "Ošetrený" : "Potvrdený", disabled: tick ? !canWrite(a.provider_id) : !canConfirm(a) });
   btn.addEventListener("click", async (e) => {
     e.stopPropagation();
-    const next = a.status === "confirmed" ? "unconfirmed" : "confirmed";
-    btn.setAttribute("aria-pressed", String(next === "confirmed"));   // odozva hneď, server potvrdí
+    const next = tick ? (a.status === "done" ? "confirmed" : "done") : (a.status === "confirmed" ? "unconfirmed" : "confirmed");
+    btn.setAttribute("aria-pressed", String(on(next)));   // odozva hneď, server potvrdí
     btn.disabled = true;
     try {
       const saved = await api("PATCH", `/api/appointments/${a.id}`, { status: next });
       Object.assign(a, saved);
       if (onDone) onDone(a);
     } catch (err) {
-      btn.setAttribute("aria-pressed", String(a.status === "confirmed"));
+      btn.setAttribute("aria-pressed", String(on(a.status)));
       toast(err.message, true);
     }
     btn.disabled = false;
@@ -1513,17 +2037,18 @@ function ringButton(a, big, onDone) {
 
 // --------------------------------------------------- ťahanie v kalendári
 // Myš: stlačiť a ťahať v prázdnom mieste = nový blok, ťahať blok = presun.
-// Dotyk: ťuknutie = blok s predvolenou dĺžkou, úchyt na spodku ho natiahne,
-// dlhé stlačenie = ťahanie (stránka sa vtedy neposúva).
+// Dotyk: ťuknutie = blok s predvolenou dĺžkou, úchyt na spodku ho natiahne. Existujúci termín
+// sa prstom presúva až po dlhom podržaní (alebo cez „Presunúť" v okne termínu).
 
 const colMin = (y, el) => S.geo.start + (y - el.getBoundingClientRect().top) / S.geo.ppm;
 const snapDown = (m) => Math.floor(m / STEP) * STEP;
-function buzz() { try { if (navigator.vibrate) navigator.vibrate(12); } catch (e) { /* bez vibrácie */ } }
+function buzz(msec) { try { if (navigator.vibrate) navigator.vibrate(msec || 12); } catch (e) { /* bez vibrácie */ } }
 
 function freeRange(c, m) {   // voľný úsek stĺpca okolo minúty m, alebo null, keď je obsadená
   let lo = S.geo.start, hi = S.geo.end;
-  for (const a of c.items) {
-    const s = toMin(a.start.slice(11)), e = endMin(a, c.date);
+  const spans = c.items.map((a) => [toMin(a.start.slice(11)), endMin(a, c.date)]);
+  for (const x of c.holds || []) { const s = toMin(x.start.slice(11)); spans.push([s, s + x.minutes]); }
+  for (const [s, e] of spans) {
     if (e <= m) lo = Math.max(lo, e);
     else if (s > m) hi = Math.min(hi, s);
     else return null;
@@ -1555,27 +2080,48 @@ function draftTo(m) {
 }
 function draftDefault() { const d = S.draft; d.minutes = Math.min(DEFAULT_LEN, d.hi - d.start); }
 
+// Zámok proti kolíziám: rozpracovaný čas sa hneď zablokuje pre ostatné zariadenia,
+// aby dve sestry nezapísali na ten istý čas dvoch pacientov.
+function syncHold() {
+  const d = S.draft && !S.draft.live ? S.draft : null;
+  const want = d ? { provider_id: d.providerId, start: `${d.date}T${hm24(d.start)}`, minutes: d.minutes } : S.dialogHold;
+  const key = want ? `${want.provider_id}|${want.start}|${want.minutes}` : "";
+  if (key === S.holdKey || !S.boot) return;
+  S.holdKey = key; S.myHold = want;
+  if (!want) { api("DELETE", "/api/holds").catch(() => {}); return; }
+  api("POST", "/api/holds", want).catch((e) => {
+    if (S.holdKey !== key) return;
+    S.holdKey = ""; S.myHold = null;
+    if (e.status !== 409) return;
+    if (S.draft) { S.draft = null; updateDraft(); }
+    toast(e.message, true);
+    loadDay();
+  });
+}
+
 function updateDraft() {
+  syncHold();
   const d = S.draft;
   let E = S.draftEls;
   const ce = d && S.colEls && S.colEls.get(d.key);
+  const drop = () => { if (!E) return; if (E.box.parentNode) E.box.parentNode.classList.remove("drafting"); E.box.remove(); E.bar.remove(); };
   if (!d || !ce) {
-    if (E) { E.box.remove(); E.bar.remove(); }
+    drop();
     S.draftEls = null;
-    if (d && !ce) S.draft = null;
+    if (d && !ce) { S.draft = null; syncHold(); }
     return;
   }
   if (!E || E.box.parentNode !== ce.el) {
-    if (E) { E.box.remove(); E.bar.remove(); }
+    drop();
     const label = h("div", { class: "draft-label" });
     const handle = h("button", { type: "button", class: "draft-handle", "aria-label": "Potiahnutím zmeníte dĺžku termínu" });
     handle.addEventListener("pointerdown", onHandleDown);
     const ok = h("button", { type: "button", class: "btn primary", onclick: confirmDraft });
-    const x = h("button", { type: "button", class: "btn icon", text: "×", "aria-label": "Zrušiť rozpracovaný termín",
-      onclick: () => { S.draft = null; updateDraft(); } });
+    const x = h("button", { type: "button", class: "btn icon", text: "×", "aria-label": "Zrušiť rozpracovaný termín", onclick: clearDraft });
     const box = h("div", { class: "draft" }, label, handle);
     const bar = h("div", { class: "draft-actions" }, ok, x);
     ce.el.append(box, bar);
+    ce.el.classList.add("drafting");
     E = S.draftEls = { box, bar, label, handle, ok };
   }
   const { start, ppm, height } = S.geo;
@@ -1589,18 +2135,74 @@ function updateDraft() {
   let barTop = top + hgt + 26;
   if (barTop + 50 > height) barTop = Math.max(0, top - 52);
   E.bar.style.top = barTop + "px";
+  const cw = ce.el.clientWidth;   // v úzkom stĺpci (týždeň na telefóne) sa tlačidlá roztiahnu cez susedné dni
+  if (cw < 190) {
+    const calR = $("cal").getBoundingClientRect(), colR = ce.el.getBoundingClientRect(), w = Math.min(210, calR.width - 58);
+    const left = Math.max(calR.left + 54 - colR.left, Math.min(calR.right - 4 - w - colR.left, cw / 2 - w / 2));
+    Object.assign(E.bar.style, { left: left + "px", right: "auto", width: w + "px" });
+  } else Object.assign(E.bar.style, { left: "", right: "", width: "" });
 }
 
 function confirmDraft() {
   const d = S.draft;
   if (!d) return;
+  S.dialogHold = { provider_id: d.providerId, start: `${d.date}T${hm24(d.start)}`, minutes: d.minutes };   // zámok drží aj počas vypĺňania okna
   S.draft = null; updateDraft();
   openApptDialog({ provider_id: d.providerId, date: d.date, time: hm24(d.start), minutes: d.minutes });
 }
 
+// Umiestnenie ťuknutím: presun termínu z jeho okna („Presunúť") alebo zaradenie akútneho pacienta.
+// Počas neho sa dá voľne listovať dňami a týždňami.
+function startPlace(p) {
+  S.place = p;
+  clearDraft();
+  if ($("dlg").open) $("dlg").close();
+  if (S.view !== "calendar") showView("calendar"); else renderPlaceBar();
+}
+function stopPlace() { S.place = null; renderPlaceBar(); }
+function renderPlaceBar() {
+  const bar = $("place-bar"), p = S.place;
+  bar.hidden = !p;
+  if (!p) return;
+  const who = p.appt ? `${apptName(p.appt)} (${p.appt.minutes} min)` : `${p.urgent.surname} ${p.urgent.name}`.trim();
+  fill(bar, h("span", { text: `${p.appt ? "Presun" : "Akútny pacient"}: ${who}. Ťuknite na voľný čas v kalendári.` }),
+    h("button", { type: "button", class: "btn small", text: "Zrušiť", onclick: stopPlace }));
+}
+async function placeAt(c, m0) {
+  const p = S.place, st = Math.max(S.geo.start, snapDown(m0));
+  if (p.appt) {
+    const a = p.appt, body = { start: `${c.date}T${hm24(st)}` };
+    if (c.provider.id !== a.provider_id) body.provider_id = c.provider.id;
+    try {
+      await api("PATCH", `/api/appointments/${a.id}`, body);
+      stopPlace();
+      toast(`Presunuté: ${fmtShort(c.date)} ${hm(st)}${body.provider_id ? " · " + c.provider.name : ""}`);
+    } catch (e) { toast(e.message, true); }
+    loadDay();
+    return;
+  }
+  const fr = freeRange(c, st);
+  if (!fr) return toast("Tento čas je obsadený. Ťuknite na voľné miesto.", true);
+  const u = p.urgent;
+  let patient = null;   // ak už je v kartotéke (rovnaký telefón a priezvisko), nezakladá sa znova
+  try {
+    const rows = await api("GET", `/api/patients?q=${encodeURIComponent(u.phone)}&limit=5`);
+    patient = rows.find((r) => r.phone === u.phone && fold(r.surname) === fold(u.surname)) || null;
+  } catch (e) { /* zapíše sa ako nový */ }
+  openApptDialog({ provider_id: c.provider.id, date: c.date, time: hm24(st), minutes: Math.min(DEFAULT_LEN, fr[1] - st), urgent: u, patient,
+    newPatient: patient ? null : { name: u.name, surname: u.surname, phone: u.phone }, note: u.note });
+}
+
 function onColDown(e, c, el) {
-  if (e.button > 0 || S.drag || !S.geo || e.target.closest(".appt, .appt-grip, .draft-actions, .draft-handle")) return;
+  if (e.button > 0 || S.drag || !S.geo) return;
+  if (e.target.closest(".hold")) { toast("Tento čas práve zapisuje kolega na inom zariadení.", true); return; }
+  if (e.target.closest(".appt, .appt-grip, .draft-actions, .draft-handle")) return;
   const m0 = colMin(e.clientY, el);
+  if (S.place) {   // ťuknutie určí nový čas
+    if (e.pointerType === "mouse") e.preventDefault();
+    S.drag = { kind: "touch-wait", place: true, id: e.pointerId, el, c, m0, x: e.clientX, y: e.clientY };
+    return;
+  }
   if (e.pointerType === "mouse") {
     e.preventDefault();
     if (!startDraft(c, m0)) return;
@@ -1627,9 +2229,16 @@ function onHandleDown(e) {
 }
 
 function onApptDown(e, a, node, c) {
-  if (e.button > 0 || S.drag || e.target.closest(".ring")) return;
+  if (e.button > 0 || S.drag || S.place || e.target.closest(".ring, .warn")) return;
   const g = { kind: "appt-wait", id: e.pointerId, a, node, c, x: e.clientX, y: e.clientY, mouse: e.pointerType === "mouse" };
-  if (!g.mouse) g.timer = setTimeout(() => { if (S.drag === g) { S.touchLock = true; buzz(); beginMove(g); } }, 450);
+  if (!g.mouse) {   // prst: podržať 1,5 s; pásik na bloku ukazuje, ako dlho ešte
+    g.hint = setTimeout(() => { if (S.drag === g) node.classList.add("holding"); }, 250);
+    g.timer = setTimeout(() => {
+      if (S.drag !== g) return;
+      node.classList.remove("holding");
+      S.touchLock = true; buzz(35); beginMove(g);
+    }, HOLD_MOVE_MS);
+  }
   S.drag = g;
 }
 
@@ -1644,10 +2253,12 @@ function beginMove(g) {
   if (g.node._grip) g.node._grip.hidden = true;
   ce.el.append(g.ghost);
   g.target = { ce, start: toMin(g.a.start.slice(11)) };
+  g.last = { clientX: g.x, clientY: g.y };
   S.suppressClick = Date.now();
 }
 
 function moveTo(g, e) {
+  g.last = { clientX: e.clientX, clientY: e.clientY };
   const under = document.elementFromPoint(e.clientX, e.clientY);
   const colEl = under && under.closest(".cal-col");
   let ce = g.target.ce;
@@ -1662,11 +2273,50 @@ function moveTo(g, e) {
   const where = S.calMode === "week" ? wdShort(ce.col.date) + " " + dm(ce.col.date) : ce.col.provider.short || ce.col.provider.name;
   if (meta) meta.textContent = `${hm(st)}–${hm(st + len)} · ${where}`;
   S.suppressClick = Date.now();
+  edgePaging(g, e);
+}
+
+// Termín podržaný pri pravom (alebo ľavom) okraji listuje ďalšími týždňami, v dennom pohľade dňami.
+function edgePaging(g, e) {
+  const r = $("cal-scroll").getBoundingClientRect();
+  const dir = e.clientX > r.right - 40 ? 1 : e.clientX < r.left + 24 ? -1 : 0;
+  if (dir === (g.edgeDir || 0)) return;
+  g.edgeDir = dir;
+  clearTimeout(g.edgeTimer);
+  const hint = $("edge-hint");
+  hint.hidden = !dir;
+  if (!dir) return;
+  hint.textContent = dir > 0 ? "›" : "‹";
+  Object.assign(hint.style, { top: r.top + "px", height: r.height + "px", left: (dir > 0 ? r.right - 44 : r.left) + "px" });
+  g.edgeTimer = setTimeout(() => pageDuringMove(g, dir), 700);
+}
+async function pageDuringMove(g, dir) {
+  if (S.drag !== g || g.kind !== "move") return;
+  g.paged = true;
+  S.date = S.calMode === "week" ? addDays(S.date, 7 * dir) : workday(S.date, dir);
+  S.swipeDir = dir; S.forceRender = true;
+  await loadDay();
+  S.forceRender = false;
+  if (S.drag === g && g.edgeDir === dir) g.edgeTimer = setTimeout(() => pageDuringMove(g, dir), 1000);
+}
+function reattachMove(g) {   // po prelistovaní: pôvodný blok ostáva v dokumente (inak dotyk stratí cieľ), tieň ide do nového týždňa
+  const cal = $("cal");
+  for (const n of cal.querySelectorAll(`.appt[data-id="${g.a.id}"]`)) { n.classList.add("moving"); if (n._grip) n._grip.hidden = true; }
+  g.node.style.display = "none";
+  cal.append(g.node);
+  const ce = [...S.colEls.values()].find((x) => canWrite(x.col.provider.id));
+  if (!ce) return;
+  g.target = { ce, start: g.target.start };
+  ce.el.append(g.ghost);
+  if (g.last) moveTo(g, g.last);
 }
 
 async function finishMove(g, cancelled) {
+  clearTimeout(g.edgeTimer);
+  $("edge-hint").hidden = true;
   if (g.ghost) g.ghost.remove();
   g.node.classList.remove("moving");
+  if (g.paged) g.node.remove();
   S.suppressClick = Date.now();
   const t = g.target, a = g.a;
   if (cancelled || !t) { renderCalendar(); return; }
@@ -1674,8 +2324,10 @@ async function finishMove(g, cancelled) {
   if (newStart === a.start && newProv === a.provider_id) { renderCalendar(); return; }
   const body = { start: newStart };
   if (newProv !== a.provider_id) body.provider_id = newProv;
-  g.node.style.top = (t.start - S.geo.start) * S.geo.ppm + "px";   // hneď na novom mieste, server potvrdí
-  t.ce.el.append(g.node);
+  if (!g.paged) {   // hneď na novom mieste, server potvrdí
+    g.node.style.top = (t.start - S.geo.start) * S.geo.ppm + "px";
+    t.ce.el.append(g.node);
+  }
   try {
     await api("PATCH", `/api/appointments/${a.id}`, body);
     const p = provider(newProv);
@@ -1692,14 +2344,20 @@ function autoScroll(e, dir) {   // dir: -1 len nahor, 1 len nadol, 0 oboma smerm
   else if (e.clientY > r.bottom - 48 && (dir || 0) >= 0) sc.scrollTop += 14;
 }
 
+function dropWait(g) {   // čakanie na dlhé podržanie sa ruší (prst sa pohol = posúva sa obrazovka)
+  clearTimeout(g.timer); clearTimeout(g.hint);
+  if (g.node) g.node.classList.remove("holding");
+  S.drag = null;
+}
+
 function onPointerMove(e) {
   const g = S.drag;
   if (!g || e.pointerId !== g.id) return;
   const dist = Math.hypot(e.clientX - g.x, e.clientY - g.y);
-  if (g.kind === "touch-wait") { if (dist > 8) { clearTimeout(g.timer); S.drag = null; } return; }
+  if (g.kind === "touch-wait" || g.kind === "grip-wait") { if (dist > 10) dropWait(g); return; }
   if (g.kind === "appt-wait") {
     if (g.mouse && dist > 6) beginMove(g);
-    else if (!g.mouse && dist > 8) { clearTimeout(g.timer); S.drag = null; return; }
+    else if (!g.mouse && dist > 10) { dropWait(g); return; }
     else return;
   }
   if (dist > 4) g.moved = true;
@@ -1725,28 +2383,27 @@ function onPointerMove(e) {
 }
 
 // Zmena dĺžky existujúceho termínu ťahaním za spodný okraj (krok 15 minút).
+// Myš ťahá hneď; prst musí úchyt chvíľu podržať, inak sa obrazovka normálne posúva.
 function onGripDown(e, a, node, grip, c) {
-  if (e.button > 0 || S.drag || !S.geo) return;
-  e.preventDefault(); e.stopPropagation();
-  try { grip.setPointerCapture(e.pointerId); } catch (err) { /* nevadí */ }
+  if (e.button > 0 || S.drag || S.place || !S.geo) return;
+  e.stopPropagation();
   const s = toMin(a.start.slice(11));
   let hi = S.geo.end;   // nedá sa natiahnuť cez nasledujúci termín v tom istom stĺpci
   for (const x of c.items) {
     const xs = toMin(x.start.slice(11));
-    if (x.id !== a.id && xs > s && xs < hi) hi = xs;
+    if (x.id !== a.id && !x.all_day && xs > s && xs < hi) hi = xs;
   }
+  for (const x of c.holds || []) { const xs = toMin(x.start.slice(11)); if (xs > s && xs < hi) hi = xs; }
   const d = S.draft;   // ani cez rozpracovaný blok
   if (d && d.key === c.key && d.start >= s && d.start < hi) hi = d.start;
   hi = Math.max(hi, s + a.minutes);   // už prekrývajúce sa staré dáta nesmú termín skrátiť samé od seba
-  const el = S.colEls.get(c.key).el;
-  const g = S.drag = { kind: "aresize", id: e.pointerId, a, node, grip, c, el, s, hi, m0: colMin(e.clientY, el),
+  const el = S.colEls.get(c.key).el, mouse = e.pointerType === "mouse";
+  const g = S.drag = { kind: mouse ? "aresize" : "grip-wait", id: e.pointerId, a, node, grip, c, el, s, hi, m0: colMin(e.clientY, el),
     min: Math.min(STEP, a.minutes), minutes: a.minutes, x: e.clientX, y: e.clientY, moved: false };
-  S.touchLock = true; S.suppressClick = Date.now();
-  node.classList.add("resizing");
-  if (e.pointerType !== "mouse") g.timer = setTimeout(() => {   // dlhé stlačenie v bloku: presun ako inde na bloku
-    if (S.drag !== g || g.moved || g.y > node.getBoundingClientRect().bottom) return;
-    node.classList.remove("resizing"); buzz(); beginMove(g);
-  }, 450);
+  S.suppressClick = Date.now();
+  const arm = () => { S.touchLock = true; node.classList.add("resizing"); };
+  if (mouse) { e.preventDefault(); try { grip.setPointerCapture(e.pointerId); } catch (err) { /* nevadí */ } arm(); }
+  else g.timer = setTimeout(() => { if (S.drag === g) { g.kind = "aresize"; arm(); buzz(); } }, HOLD_GRIP_MS);
 }
 
 function drawGripResize(g) {
@@ -1778,10 +2435,13 @@ function onPointerUp(e) {
   if (!g || e.pointerId !== g.id) return;
   const cancel = e.type === "pointercancel";
   S.drag = null; S.touchLock = false;
-  clearTimeout(g.timer);
+  clearTimeout(g.timer); clearTimeout(g.hint);
+  if (g.node) g.node.classList.remove("holding");
   if (DRAG_KINDS.includes(g.kind)) S.lastDragEnd = Date.now();
   if (g.kind === "touch-wait") {   // ťuknutie do prázdneho miesta
-    if (!cancel && startDraft(g.c, g.m0)) { draftDefault(); S.draft.live = false; updateDraft(); }
+    if (cancel) { /* nič */ }
+    else if (g.place) placeAt(g.c, g.m0);
+    else if (startDraft(g.c, g.m0)) { draftDefault(); S.draft.live = false; updateDraft(); }
   } else if (g.kind === "create") {
     if (cancel) S.draft = null;
     else { if (!g.moved) draftDefault(); S.draft.live = false; }
@@ -1792,10 +2452,10 @@ function onPointerUp(e) {
   } else if (g.kind === "move") {
     finishMove(g, cancel);
     return;
-  } else if (g.kind === "aresize") {
+  } else if (g.kind === "grip-wait" || g.kind === "aresize") {
     S.renderLater = false;
     g.node.classList.remove("resizing");
-    if (!cancel && !g.moved) {
+    if (!cancel && (g.kind === "grip-wait" || !g.moved)) {   // ťuknutie na úchyt = ťuknutie na to miesto
       const below = e.clientY > g.node.getBoundingClientRect().bottom;
       renderCalendar();
       const ce = S.colEls.get(g.c.key);
@@ -1803,10 +2463,33 @@ function onPointerUp(e) {
       else if (ce && startDraft(ce.col, colMin(e.clientY, ce.el))) { draftDefault(); S.draft.live = false; updateDraft(); }
       return;
     }
-    finishGripResize(g, cancel);
+    if (g.kind === "aresize") finishGripResize(g, cancel);
     return;
   }
   if (S.renderLater) { S.renderLater = false; renderCalendar(); }
+}
+
+// Najbližší voľný čas (aspoň 15 minút): kalendár naň skočí a pripraví blok. Ďalšie ťuknutie hľadá neskorší.
+async function gotoFreeSlot() {
+  const d = S.draft && S.draft.fromFree ? S.draft : null;
+  const from = d ? `${d.date}T${hm24(d.start + d.minutes)}` : nowIso();
+  let r;
+  try { r = await api("GET", `/api/free-slot?minutes=${STEP}&from=${encodeURIComponent(from)}${S.prov ? `&provider_id=${S.prov}` : ""}`); }
+  catch (e) { return toast(e.message, true); }
+  const day = r.start.slice(0, 10), min = toMin(r.start.slice(11));
+  S.draft = null;
+  if (!visibleDates().includes(day)) S.date = day;
+  S.scrollFor = `${S.calMode}|${S.date}`;   // neposúvať na aktuálny čas, ale na nájdený
+  S.afterRender = () => {
+    const ce = S.colEls.get(S.calMode === "week" ? day : "p" + r.provider_id);
+    if (!ce || !startDraft(ce.col, min)) return;
+    Object.assign(S.draft, { anchor: min, start: min, minutes: Math.min(DEFAULT_LEN, r.free_minutes, S.draft.hi - min), live: false, fromFree: true });
+    updateDraft();
+    $("cal-scroll").scrollTop = Math.max(0, (min - 75 - S.geo.start) * S.geo.ppm);
+    const p = provider(r.provider_id);
+    toast(`Najbližší voľný: ${fmtShort(day)} ${hm(min)}${S.prov || !p ? "" : " · " + p.name} (voľných ${r.free_minutes} min)`);
+  };
+  await loadDay();
 }
 
 function initCalendarGestures() {
@@ -1817,7 +2500,7 @@ function initCalendarGestures() {
   // počas ťahania prstom sa stránka nesmie posúvať
   sc.addEventListener("touchmove", (e) => { if (S.touchLock) e.preventDefault(); }, { passive: false });
   $("cal").addEventListener("contextmenu", (e) => e.preventDefault());
-  // vodorovné potiahnutie mení deň (v týždni týždeň); ošetrujúci sa mení ťuknutím na prepínač
+  // vodorovné potiahnutie mení deň (v týždni týždeň); ošetrujúci sa mení v menu hore
   let sw = null;
   sc.addEventListener("touchstart", (e) => {
     sw = e.touches.length === 1 ? { x: e.touches[0].clientX, y: e.touches[0].clientY, t: Date.now() } : null;
@@ -1828,12 +2511,13 @@ function initCalendarGestures() {
     const t = e.changedTouches[0], dx = t.clientX - s.x, dy = t.clientY - s.y;
     if (Math.abs(dx) < 60 || Math.abs(dx) < 2 * Math.abs(dy) || Date.now() - s.t > 700) return;
     if ($("cal").offsetWidth > sc.clientWidth + 2) return;   // široká tabuľka sa posúva, nie prepína (animácia prechodu sa nepočíta)
-    if (S.drag) { clearTimeout(S.drag.timer); S.drag = null; }
+    if (S.drag) dropWait(S.drag);
     S.swipeDir = dx < 0 ? 1 : -1;
     shift(S.swipeDir);
   }, { passive: true });
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && S.draft && !$("dlg").open) { S.draft = null; updateDraft(); }
+    if (e.key !== "Escape" || $("dlg").open) return;
+    if (S.draft) clearDraft(); else if (S.place) stopPlace();
   });
 }
 
@@ -1935,9 +2619,9 @@ function normPhone(raw) {   // rovnako ako server: "+421…", "" pri prázdnom, 
   if (d.startsWith("+421") ? d.length !== 13 : d.length < 10 || d.length > 16) return null;
   return d;
 }
-function checkPhone(input, required) {
+function checkPhone(input, required, msg) {
   const v = normPhone(input.value);
-  if (v === "" && required) inlineError(input, "Doplňte telefón pacienta, bez neho sa termín neuloží. Napríklad 0905 123 456.");
+  if (v === "" && required) inlineError(input, msg || "Doplňte telefón pacienta, bez neho sa termín neuloží. Napríklad 0905 123 456.");
   if (v === null) inlineError(input, "Telefón zadajte ako 0905 123 456 alebo s predvoľbou, napríklad +420 601 123 456.");
   return input.value.trim();
 }
@@ -1970,8 +2654,8 @@ function birthNumberInput(value) {
 }
 
 // Pacient: jedno pole s ponukou z kartotéky, prvá položka je vždy „Nový pacient".
-function patientField(initial) {
-  let picked = initial || null, creating = false, changed = false, seq = 0, timer, rows = [], active = 0;
+function patientField(initial, seedNew) {
+  let picked = initial || null, creating = !initial && !!seedNew, changed = false, seq = 0, timer, rows = [], active = 0;
   const id = "pf" + (++uidSeq);
   const el = h("div", { class: "field" });
   const input = h("input", { type: "text", role: "combobox", "aria-autocomplete": "list", "aria-expanded": "false", "aria-controls": id + "-list",
@@ -1986,6 +2670,7 @@ function patientField(initial) {
     note: h("input", { type: "text", autocomplete: "off", maxlength: 300 }),
   };
   const phoneFix = h("input", { type: "tel", autocomplete: "off", maxlength: 40, placeholder: "0905 123 456" });
+  if (seedNew) { nw.name.value = seedNew.name || ""; nw.surname.value = seedNew.surname || ""; nw.phone.value = seedNew.phone || ""; }
 
   const options = () => [{ isNew: true }, ...rows];
   function hideList() { list.hidden = true; input.setAttribute("aria-expanded", "false"); input.removeAttribute("aria-activedescendant"); }
@@ -2049,6 +2734,8 @@ function patientField(initial) {
             h("div", {}, picked.phone ? telLink(picked.phone, true) : h("span", { class: "error", text: "V kartotéke chýba telefón" }))),
           h("button", { type: "button", class: "btn small", text: "Zmeniť pacienta",
             onclick: () => { picked = null; changed = true; draw(); input.value = ""; rows = []; input.focus(); } })),
+        picked.alert ? alertBox(picked) : null,
+        picked.no_show_count ? h("p", { class: "field-err", text: `Neprišiel bez ospravedlnenia: ${picked.no_show_count}×` }) : null,
         picked.phone ? null : field("Telefón pacienta (povinný)", phoneFix, h("small", { class: "muted", text: "Uloží sa do kartotéky k pacientovi." })));
     } else if (creating) {
       fill(el, h("span", { class: "field-label", id: id + "-l", text: "Nový pacient" }),
@@ -2196,27 +2883,29 @@ function openApptDialog(init) {
 
   let kind = a ? a.kind : "appointment";
   let providerId = a ? a.provider_id : init.provider_id;
-  if (!providerId || !provs.some((p) => p.id === providerId)) providerId = (provs.find((p) => p.id === S.only) || provs.find((p) => p.id === B.user.provider_id) || provs[0]).id;
+  if (!providerId || !provs.some((p) => p.id === providerId)) providerId = (provs.find((p) => p.id === S.prov) || provs.find((p) => p.id === B.user.provider_id) || provs[0]).id;
   let status = a ? a.status : "unconfirmed";
   const date = a ? a.start.slice(0, 10) : init.date || S.date;
 
   openDialog(a ? (kind === "block" ? "Blokovanie" : "Termín") : "Nový termín", (ctx) => {
     const when = whenControl({ date, time: a ? a.start.slice(11) : init.time || defaultTime(date), minutes: a ? a.minutes : init.minutes || DEFAULT_LEN,
       provider: providerId, chair: a ? (a.chair_id === null ? "none" : a.chair_id) : "default", open: !a && !init.time }, provs, a ? "edit" : "new");
-    const pf = patientField(a ? a.patient : init.patient || null);
-    const note = h("textarea", { maxlength: 1000, rows: 2, value: a ? a.note : "", placeholder: "napr. dorobiť RTG, prísť nalačno" });
+    const pf = patientField(a ? a.patient : init.patient || null, a ? null : init.newPatient || null);
+    const note = h("textarea", { maxlength: 1000, rows: 2, value: a ? a.note : init.note || "", placeholder: "napr. dorobiť RTG, prísť nalačno" });
     const cat = categoryPicker(a ? a.type_id : null);
-    const label = h("input", { type: "text", maxlength: 120, value: a ? a.label : "", placeholder: "napr. Obed, Dovolenka" });
-    const reasons = chipGroup(["Obed", "Dovolenka", "Porada", "Technická prestávka"].map((r) => ({ value: r, label: r })), null, (v) => { label.value = v; });
+    const label = h("input", { type: "text", maxlength: 120, value: a ? a.label : "", placeholder: "napr. Obed, Porada" });
+    const reasons = chipGroup(["Obed", "Porada", "Technická prestávka"].map((r) => ({ value: r, label: r })), null, (v) => { label.value = v; });
+    const smsIn = h("input", { type: "checkbox", checked: true });   // okamžitá potvrdzujúca SMS
+    const smsBox = !a && B.settings.sms_confirm ? h("label", { class: "check" }, smsIn, h("span", { text: "Poslať pacientovi SMS s potvrdením termínu" })) : null;
 
-    // stav (len pri úprave): potvrdzovací krúžok, prišiel, neprišiel
+    // stav (len pri úprave): potvrdzovací krúžok, ošetrený, neprišiel
     const statusBox = h("div", { class: "field" });
     function drawStatus() {
       const ring = h("button", { type: "button", class: "ring", "aria-pressed": String(status === "confirmed"),
         onclick: () => { status = status === "confirmed" ? "unconfirmed" : "confirmed"; drawStatus(); } }, "Potvrdený");
       const flag = (s, text) => h("button", { type: "button", class: "chip", "aria-pressed": String(status === s), text,
         onclick: () => { status = status === s ? "confirmed" : s; drawStatus(); } });
-      fill(statusBox, h("span", { class: "field-label", text: "Stav" }), h("div", { class: "status-row" }, ring, flag("done", "Prišiel"), flag("no_show", "Neprišiel")));
+      fill(statusBox, h("span", { class: "field-label", text: "Stav" }), h("div", { class: "status-row" }, ring, flag("done", "Ošetrený"), flag("no_show", "Neprišiel")));
     }
     if (a && a.kind === "appointment") drawStatus();
 
@@ -2231,8 +2920,9 @@ function openApptDialog(init) {
       }).catch(() => {});
     }
 
-    const apptOnly = h("div", { style: "display:grid;gap:16px" }, pf.el, field("Poznámka k ošetreniu", note), cat.el);
-    const blockOnly = h("div", { style: "display:grid;gap:12px" }, field("Dôvod blokovania", label), reasons.el, field("Poznámka", note.cloneNode()));
+    const apptOnly = h("div", { style: "display:grid;gap:16px" }, pf.el, field("Poznámka k ošetreniu", note), cat.el, smsBox);
+    const blockOnly = h("div", { style: "display:grid;gap:12px" }, field("Dôvod blokovania", label), reasons.el, field("Poznámka", note.cloneNode()),
+      a ? null : h("button", { type: "button", class: "link-btn", text: "Celé dni od–do (dovolenka, školenie)", onclick: () => openVacationDialog(providerId, date) }));
     const blockNote = blockOnly.querySelector("textarea");
     blockNote.value = a && a.kind === "block" ? a.note : "";
     const save = h("button", { type: "submit", class: "btn primary" });
@@ -2242,12 +2932,15 @@ function openApptDialog(init) {
       blockOnly.hidden = kind !== "block";
       ctx.titleEl.textContent = a ? (kind === "block" ? "Blokovanie" : "Termín") : kind === "block" ? "Blokovať čas" : "Nový termín";
       save.textContent = a ? "Uložiť zmeny" : kind === "block" ? "Uložiť blokovanie" : "Uložiť termín";
-      if (kindLink) kindLink.textContent = kind === "block" ? "Späť na termín pacienta" : "Blokovať čas namiesto termínu";
+      if (kindLink) kindLink.textContent = kind === "block" ? "Späť na termín pacienta" : "Blokovať čas alebo dovolenku";
     }
-    add(ctx.form, when.el, apptOnly, blockOnly, a && a.kind === "appointment" ? statusBox : null, a && a.patient ? nextBox : null);
+    add(ctx.form,
+      init.urgent ? h("p", { class: "notice", text: "Akútny pacient zo zoznamu na zavolanie. Po uložení termínu z neho zmizne." }) : null,
+      a && a.auto === "lunch" ? h("p", { class: "muted", text: "Pravidelná obedná prestávka. Zmena platí len pre tento deň; pravidlo sa mení v Nastaveniach pri ošetrujúcom." }) : null,
+      when.el, apptOnly, blockOnly, a && a.kind === "appointment" ? statusBox : null, a && a.patient ? nextBox : null, a ? smsSection(a) : null);
     sync();
 
-    // päta: uloženie, zrušenie termínu, história
+    // päta: uloženie, presun, zrušenie termínu, história
     const footer = ctx.footer = h("div", { style: "display:grid;gap:12px" });
     const histBox = h("div", {});
     function drawFooter(confirmCancel) {
@@ -2262,6 +2955,7 @@ function openApptDialog(init) {
         h("div", { class: "row between" },
           h("div", { class: "row" },
             a ? h("button", { type: "button", class: "btn danger", text: a.kind === "block" ? "Odstrániť" : "Zrušiť termín", onclick: () => drawFooter(true) }) : kindLink,
+            a ? h("button", { type: "button", class: "btn", text: "Presunúť", title: "Zavrie okno, nový čas určíte ťuknutím v kalendári", onclick: () => startPlace({ appt: a }) }) : null,
             a && isAdmin() ? h("button", { type: "button", class: "btn", text: "História", onclick: () => showHistory(a.id, histBox) }) : null),
           save),
         histBox);
@@ -2285,14 +2979,18 @@ function openApptDialog(init) {
         if (kind === "appointment") {
           Object.assign(body, await pf.resolve());
           body.type_id = cat.get();
+          body.send_sms = !!smsBox && smsIn.checked;
+          if (init.urgent) body.urgent_id = init.urgent.id;
         } else {
           if (!label.value.trim()) inlineError(label, "Napíšte dôvod, napríklad Obed.");
           body.label = label.value.trim();
         }
-        await api("POST", "/api/appointments", body);
+        const made = await api("POST", "/api/appointments", body);
+        if (init.urgent) { S.place = null; loadUrgent(); }
         ctx.close();
-        toast(kind === "block" ? "Blokovanie uložené" : "Termín uložený");
-        S.date = w.date; S.scrollFor = S.calMode + "|" + (S.calMode === "week" ? weekStart(w.date) : w.date);
+        toast(kind === "block" ? "Blokovanie uložené" : "Termín uložený" + smsToast(made[0]));
+        if (!visibleDates().includes(w.date)) S.date = w.date;
+        S.scrollFor = `${S.calMode}|${S.date}`;
         if (S.view !== "calendar") showView("calendar"); else loadDay();
         return;
       }
@@ -2357,55 +3055,285 @@ async function showHistory(id, box) {
   } catch (e) { fill(box, h("p", { class: "error", text: e.message })); }
 }
 
+// ------------------------------------------------- zdravotné upozornenia a SMS
+
+function alertBox(p) {
+  return h("div", { class: "alert-box" }, h("span", { class: "warn-ico", "aria-hidden": "true" }),
+    h("div", {}, h("b", { text: "Zdravotné upozornenie" }), h("div", { text: p.alert })));
+}
+function openAlert(p) {   // ťuknutie na červený trojuholník v kalendári
+  openDialog(patientName(p), (ctx) => {
+    add(ctx.form, alertBox(p),
+      p.no_show_count ? h("p", { class: "field-err", text: `Neprišiel bez ospravedlnenia: ${p.no_show_count}×` }) : null,
+      p.phone ? h("div", { class: "row" }, telLink(p.phone)) : null);
+  }, { narrow: true });
+}
+
+const smsWhen = (iso) => `${iso.slice(0, 10) === S.boot.today ? "dnes" : dm(iso.slice(0, 10))} o ${hm(toMin(iso.slice(11)))}`;
+function smsToast(v) {
+  const s = v && (v.sms || []).find((x) => x.kind === "confirm");
+  return !s ? "" : s.status === "sent" ? " · SMS s potvrdením odoslaná" : " · SMS sa nedá poslať (pevná linka)";
+}
+function smsLine(a) {   // stav pripomienky v zozname na obvolanie
+  if (!a.patient || !a.patient.phone) return "";
+  if (!a.patient.sms_ok) return "bez SMS (pevná linka)";
+  const r = a.sms_reminder;
+  if (!r) return "";
+  return r.state === "planned" ? `SMS pripomienka odíde ${smsWhen(r.at)}` : r.state === "sent" ? `SMS pripomienka odoslaná ${smsWhen(r.at)}` : "";
+}
+function smsSection(a) {   // v úprave termínu: čo pacientovi odišlo a čo ešte odíde
+  if (a.kind !== "appointment" || !a.patient) return null;
+  const KIND = { confirm: "Potvrdenie termínu", remind: "Pripomienka deň vopred" }, rows = [];
+  for (const s of a.sms || []) {
+    rows.push(h("li", {}, h("div", {}, h("b", { text: KIND[s.kind] || s.kind }), " ",
+      h("span", { class: "muted", text: s.status === "sent" ? `odoslaná ${smsWhen(s.at)}` : "neodoslaná, číslo neprijíma SMS" })),
+      h("div", { class: "muted sms-text", text: s.text })));
+  }
+  const r = a.sms_reminder;
+  if (r && r.state === "planned") rows.push(h("li", {}, h("b", { text: KIND.remind }), " ", h("span", { class: "muted", text: `odíde ${smsWhen(r.at)}` })));
+  if (!rows.length) return null;
+  return h("details", { class: "field sms" }, h("summary", { text: `SMS pacientovi (${rows.length})` }), h("ul", { class: "history" }, rows),
+    h("p", { class: "muted", text: "V ukážke sa SMS neposielajú, vidno len ich znenie." }));
+}
+
+// ------------------------------------------------------------ urgentní pacienti
+// Akútny stav bez pevného termínu: zapíše sa do zoznamu „na zavolanie" u zvoleného ošetrujúceho.
+// Po zavolaní sa označí ako vyriešený alebo sa preklopí do voľného času v kalendári.
+
+async function loadUrgent() {
+  if (!S.boot) return;
+  try { S.urgent = await api("GET", "/api/urgent"); } catch (e) { return; }
+  renderUrgent();
+}
+function sinceMin(iso) { const n = clinicNow(); return dayDiff(iso.slice(0, 10), n.date) * 1440 + n.min - toMin(iso.slice(11)); }
+const waitText = (m) => (m < 60 ? `${Math.max(0, m)} min` : `${Math.floor(m / 60)} h ${m % 60} min`);
+const urgentName = (u) => `${u.surname} ${u.name}`.trim();
+function urgentCard(u, withProv) {
+  const p = provider(u.provider_id);
+  return h("button", { type: "button", class: "urgent-card" + (u.called_at ? " called" : ""), onclick: () => openUrgentDialog(u) },
+    h("b", { text: urgentName(u) }),
+    h("small", { text: [`čaká ${waitText(sinceMin(u.created_at))}`, withProv && p ? p.short || p.name : "",
+      u.called_at ? `volané ${hm(toMin(u.called_at.slice(11)))}` : "", u.note].filter(Boolean).join(" · ") }));
+}
+function renderUrgent() {
+  const bar = $("urgent-bar");
+  if (!S.boot) return;
+  const rows = S.urgent.filter((u) => S.prov === null || u.provider_id === S.prov), others = S.urgent.length - rows.length;
+  bar.hidden = !S.urgent.length;
+  const cnt = $("urgent-count");   // na menších obrazovkách zoznam nahrádza počítadlo v riadku ovládania
+  cnt.hidden = !S.urgent.length;
+  cnt.setAttribute("aria-label", `Akútni pacienti na zavolanie: ${rows.length}${others ? `, u kolegov ${others}` : ""}. Otvoriť zoznam.`);
+  fill(cnt, h("span", { class: "warn-ico", "aria-hidden": "true" }), h("span", { class: "full", text: "Na zavolanie:" }), rows.length || !others ? String(rows.length) : "", others ? h("small", { text: `+${others}`, title: "u kolegov" }) : null);
+  fill(bar, h("span", { class: "urgent-title" }, h("span", { class: "warn-ico", "aria-hidden": "true" }), `Akútni na zavolanie: ${rows.length}`),
+    rows.map((u) => urgentCard(u, S.prov === null)),
+    others ? h("button", { type: "button", class: "link-btn", text: `a ${others} u kolegov`, onclick: openUrgentList }) : null);
+}
+function openUrgentList() {
+  openDialog("Akútni pacienti na zavolanie", (ctx) => {
+    const mine = (u) => S.prov === null || u.provider_id === S.prov;
+    const rows = [...S.urgent.filter(mine), ...S.urgent.filter((u) => !mine(u))];
+    add(ctx.form, rows.length ? h("div", { class: "urgent-list" }, rows.map((u) => urgentCard(u, true))) : h("p", { class: "muted", text: "Nikto nečaká na zavolanie." }));
+    ctx.footer = h("div", { class: "row end" }, h("button", { type: "button", class: "btn urgent", text: "+ Urgentný pacient", onclick: openUrgentNew }));
+  }, { narrow: true });
+}
+
+function openAccount() {   // prihlásený používateľ a odhlásenie (v navigačnom páse)
+  const u = S.boot.user;
+  openDialog(u.name, (ctx) => {
+    add(ctx.form, h("p", { class: "lead", text: `Prihlásený používateľ: ${ROLE[u.role] || u.role}` }),
+      h("p", { class: "demo-note", text: "Ukážka s vymyslenými údajmi. Zmeny sa po zatvorení stránky stratia." }));
+    ctx.footer = h("div", { class: "row end" }, h("button", { type: "button", class: "btn primary", text: "Odhlásiť sa", onclick: logout }));
+  }, { narrow: true });
+}
+
+function openUrgentNew() {
+  const B = S.boot;
+  openDialog("Urgentný pacient", (ctx) => {
+    const f = {
+      name: h("input", { type: "text", autocomplete: "off", maxlength: 80 }),
+      surname: h("input", { type: "text", autocomplete: "off", maxlength: 80 }),
+      phone: h("input", { type: "tel", autocomplete: "off", maxlength: 40, placeholder: "0905 123 456" }),
+      note: h("textarea", { maxlength: 500, rows: 2, placeholder: "napr. bolesť vpravo hore od včera" }),
+    };
+    const prov = selectEl(B.providers.map((p) => ({ value: p.id, label: p.name })), S.prov || B.user.provider_id || B.providers[0].id);
+    const quick = h("div", { class: "chips" }, ["bolesť", "opuch", "úraz", "vypadnutá plomba", "krvácanie"].map((w) =>
+      h("button", { type: "button", class: "chip", text: w, onclick: () => { f.note.value = f.note.value.trim() ? `${f.note.value.trim()}, ${w}` : w.charAt(0).toUpperCase() + w.slice(1); } })));
+    add(ctx.form,
+      h("p", { class: "lead", text: "Akútny stav bez pevného termínu. Pacient sa zaradí do zoznamu na zavolanie u zvoleného ošetrujúceho." }),
+      h("div", { class: "grid2" }, field("Meno", f.name), field("Priezvisko", f.surname)),
+      h("div", { class: "grid2" }, h("label", { class: "field" }, h("span", {}, "Telefón ", h("span", { class: "req", text: "(povinný)" })), f.phone), field("Ošetrujúci", prov)),
+      field("Ťažkosti", f.note), quick);
+    ctx.footer = h("div", { class: "row end" }, h("button", { type: "submit", class: "btn primary", text: "Zaradiť na zavolanie" }));
+    ctx.onSubmit = async () => {
+      if (!f.surname.value.trim()) inlineError(f.surname, "Doplňte priezvisko pacienta.");
+      checkPhone(f.phone, true, "Doplňte telefón, na ktorý pacientovi zavoláte. Napríklad 0905 123 456.");
+      await api("POST", "/api/urgent", { name: f.name.value, surname: f.surname.value, phone: f.phone.value, provider_id: Number(prov.value), note: f.note.value });
+      ctx.close();
+      toast("Pacient je v zozname na zavolanie");
+      loadUrgent();
+    };
+    setTimeout(() => f.name.focus(), 50);
+  }, { narrow: true });
+}
+
+function openUrgentDialog(u) {
+  const B = S.boot;
+  openDialog("Akútny pacient", (ctx) => {
+    const prov = selectEl(B.providers.map((p) => ({ value: p.id, label: p.name })), u.provider_id);
+    const note = h("textarea", { maxlength: 500, rows: 3, value: u.note });
+    const edits = () => ({ provider_id: Number(prov.value), note: note.value });
+    const patch = async (body, msg) => {
+      try { await api("PATCH", `/api/urgent/${u.id}`, body); ctx.close(); if (msg) toast(msg); loadUrgent(); }
+      catch (e) { ctx.fail(e.message); }
+    };
+    add(ctx.form,
+      h("div", { class: "alert-box" }, h("span", { class: "warn-ico", "aria-hidden": "true" }),
+        h("div", {}, h("b", { text: urgentName(u) }),
+          h("div", { class: "muted", text: `Zapísané ${smsWhen(u.created_at)} (${u.created_by}) · čaká ${waitText(sinceMin(u.created_at))}` + (u.called_at ? ` · volané ${smsWhen(u.called_at)}` : "") }))),
+      h("div", { class: "row" }, telLink(u.phone),
+        h("button", { type: "button", class: "btn", text: u.called_at ? "Zrušiť označenie „volané“" : "Označiť ako volané",
+          onclick: () => patch(Object.assign({ called: !u.called_at }, edits()), u.called_at ? "" : "Označené ako volané") })),
+      field("Ošetrujúci", prov), field("Ťažkosti a dohodnuté inštrukcie", note));
+    const footer = ctx.footer = h("div", { style: "display:grid;gap:12px" });
+    function drawFooter(confirm) {
+      if (confirm) {
+        fill(footer, h("div", { class: "notice" }, h("p", { text: "Naozaj vyriešené? Pacient zmizne zo zoznamu na zavolanie." }),
+          h("div", { class: "row", style: "margin-top:10px" },
+            h("button", { type: "button", class: "btn primary", text: "Áno, vyriešené", onclick: () => patch(Object.assign({ status: "resolved" }, edits()), "Prípad vyriešený") }),
+            h("button", { type: "button", class: "btn", text: "Nie, ponechať", onclick: () => drawFooter(false) }))));
+        return;
+      }
+      fill(footer, h("div", { class: "row between" },
+        h("div", { class: "row" }, h("button", { type: "button", class: "btn", text: "Vyriešené", onclick: () => drawFooter(true) }),
+          h("button", { type: "submit", class: "btn", text: "Uložiť" })),
+        h("button", { type: "button", class: "btn primary", text: "Zaradiť do kalendára", onclick: () => {
+          const next = Object.assign({}, u, edits());
+          api("PATCH", `/api/urgent/${u.id}`, edits()).catch(() => {});
+          if (S.calMode === "week" || narrow() || S.prov !== null) { S.prov = next.provider_id; S.lastProv = S.prov; }
+          startPlace({ urgent: next });
+          loadDay();
+        } })));
+    }
+    drawFooter(false);
+    ctx.onSubmit = () => patch(edits(), "Uložené");
+  }, { narrow: true });
+}
+
+// ------------------------------------------------------------- dovolenky od–do
+
+function openVacationDialog(provId, fromDate) {
+  const B = S.boot, provs = writableProviders();
+  if (!provs.length) return toast("Do kalendára nemôžete zapisovať.", true);
+  openDialog("Dovolenka a celé dni voľna", (ctx) => {
+    const prov = selectEl(provs.map((p) => ({ value: p.id, label: p.name })), provs.some((p) => p.id === provId) ? provId : provs[0].id);
+    const from = h("input", { type: "date", required: true, value: fromDate || S.date || B.today });
+    const to = h("input", { type: "date", required: true });
+    const label = h("input", { type: "text", maxlength: 60, value: "Dovolenka" });
+    const reasons = h("div", { class: "chips" }, ["Dovolenka", "Školenie", "PN", "Sviatok"].map((w) =>
+      h("button", { type: "button", class: "chip", text: w, onclick: () => { label.value = w; } })));
+    const info = h("p", { class: "muted", hidden: true });
+    const save = h("button", { type: "submit", class: "btn primary", text: "Zablokovať dni" });
+    let warned = null;   // obdobie, pri ktorom už používateľ videl upozornenie na zapísaných pacientov
+    const reset = () => { warned = null; save.textContent = "Zablokovať dni"; info.hidden = true; };
+    for (const el of [prov, from, to]) el.addEventListener("change", reset);
+    add(ctx.form,
+      h("p", { class: "lead", text: "Zablokuje celé pracovné dni v zadanom období, bez vypĺňania hodín. Víkendy sa preskočia." }),
+      field("Ošetrujúci", prov),
+      h("div", { class: "grid2" }, field("Od", from), field("Do (vrátane)", to)),
+      field("Dôvod", label), reasons, info);
+    ctx.footer = h("div", { class: "row end" }, save);
+    ctx.onSubmit = async () => {
+      if (!from.value) inlineError(from, "Doplňte prvý deň voľna.");
+      if (!to.value) inlineError(to, "Doplňte posledný deň voľna.");
+      if (to.value < from.value) inlineError(to, "Posledný deň nesmie byť skôr ako prvý.");
+      const body = { provider_id: Number(prov.value), from: from.value, to: to.value, label: label.value };
+      const key = `${body.provider_id}|${body.from}|${body.to}`;
+      if (warned !== key) {
+        const c = await api("POST", "/api/blocks/range", Object.assign({ check: true }, body));
+        if (c.conflicts) {
+          warned = key;
+          info.className = "notice"; info.hidden = false;
+          info.textContent = `V tomto období je zapísaných pacientov: ${c.conflicts} (prvý ${fmtShort(c.first.slice(0, 10))} o ${hm(toMin(c.first.slice(11)))}). ` +
+            "Ich termíny ostanú v kalendári, treba ich presunúť alebo zrušiť.";
+          save.textContent = `Zablokovať aj tak (${c.days} dní)`;
+          return;
+        }
+      }
+      const r = await api("POST", "/api/blocks/range", body);
+      ctx.close();
+      toast(`Zablokované pracovné dni: ${r.days}`);
+      S.date = isWeekend(body.from) ? workday(body.from, 1) : body.from; S.scrollFor = null;
+      if (S.prov !== null) { S.prov = body.provider_id; S.lastProv = S.prov; }
+      if (S.view !== "calendar") showView("calendar"); else loadDay();
+    };
+  }, { narrow: true });
+}
+
+function openVacationInfo(a) {   // ťuknutie na celodenné voľno v kalendári
+  const p = provider(a.provider_id), r = a.range;
+  openDialog(a.label || "Voľno", (ctx) => {
+    add(ctx.form,
+      h("p", {}, h("b", { text: p ? p.name : "" }), r && r.days > 1 ? ` · ${dm(r.from)} – ${dm(r.to)} ${r.to.slice(0, 4)}, pracovných dní: ${r.days}` : ""),
+      h("p", { class: "muted", text: `Vybraný deň: ${fmtDay(a.start.slice(0, 10))}` }));
+    if (!canWrite(a.provider_id)) return;
+    const run = async (call, msg) => { try { await call(); ctx.close(); toast(msg); loadDay(); } catch (e) { ctx.fail(e.message); } };
+    ctx.footer = h("div", { class: "row between" },
+      h("button", { type: "button", class: "btn danger", text: "Uvoľniť tento deň",
+        onclick: () => run(() => api("PATCH", `/api/appointments/${a.id}`, { status: "cancelled" }), "Deň je uvoľnený") }),
+      r && r.days > 1 ? h("button", { type: "button", class: "btn danger", text: "Zrušiť celé obdobie",
+        onclick: () => run(() => api("PATCH", `/api/blocks/range/${a.range_id}`, { status: "cancelled" }), "Voľno je zrušené") }) : null);
+  }, { narrow: true });
+}
+
 // ---------------------------------------------------------------- na zajtra
-// Všetci objednaní na deň, zoradení podľa času, s filtrom na ošetrujúceho.
+// Všetci objednaní na deň, zoradení podľa času. Predvolene pacienti ošetrujúceho zvoleného
+// v hornom menu (po prihlásení vlastná ambulancia), dá sa prepnúť na kolegu alebo na všetkých.
+
+const callDay = () => workday(S.boot.today, 1);   // najbližší pracovný deň (v piatok pondelok)
 
 async function refreshTomorrowCount() {
   if (!S.boot) return;
   try {
-    const r = await api("GET", "/api/unconfirmed");
+    const r = await api("GET", `/api/unconfirmed?date=${callDay()}${S.prov ? `&provider_id=${S.prov}` : ""}`);
     const c = $("tomorrow-count");
     c.textContent = r.items.length; c.hidden = r.items.length === 0;
   } catch (e) { /* počítadlo nie je kritické */ }
 }
 
-function renderTmFilter() {
-  const chips = [h("button", { type: "button", class: "chip", "aria-pressed": String(!S.tmProv), text: "Všetci",
-    onclick: () => { S.tmProv = null; loadTomorrow(); } })];
-  for (const p of S.boot.providers) chips.push(h("button", { type: "button", class: "chip", "aria-pressed": String(S.tmProv === p.id),
-    onclick: () => { S.tmProv = p.id; loadTomorrow(); } }, h("span", { class: "dot", color: p.color }), p.short || p.name));
-  fill($("tm-filter"), ...chips);
-}
-
 async function loadTomorrow() {
   if (!S.boot) return;
-  const date = S.tmDate || addDays(S.boot.today, 1), key = `${date}|${S.tmProv || ""}`;
+  const next = callDay(), tomorrow = addDays(S.boot.today, 1);
+  const date = S.tmDate || next, key = `${date}|${S.prov || ""}`;
   S.tmDate = date; S.tmKey = key;
   $("tm-date").value = date;
-  renderTmFilter();
+  const wd = new Intl.DateTimeFormat("sk-SK", { weekday: "long", timeZone: "UTC" }).format(new Date(next + "T12:00:00Z"));
+  $("tm-reset").textContent = next === tomorrow ? "Zajtra" : wd.charAt(0).toUpperCase() + wd.slice(1);
+  renderProvPick();
   try {
-    const r = await api("GET", `/api/day-list?date=${date}${S.tmProv ? `&provider_id=${S.tmProv}` : ""}`);
+    const r = await api("GET", `/api/day-list?date=${date}${S.prov ? `&provider_id=${S.prov}` : ""}`);
     if (!S.boot || S.tmKey !== key) return;
-    const items = r.items;
-    const tomorrow = addDays(S.boot.today, 1);
+    const items = r.items, p0 = provider(S.prov);
     $("tm-title").textContent = fmtDay(date) + (date === tomorrow ? " (zajtra)" : date === S.boot.today ? " (dnes)" : "");
     const left = items.filter((a) => a.status === "unconfirmed").length;
-    $("tm-summary").textContent = !items.length ? "" : `Objednaných: ${items.length}. ` +
-      (left ? `Nepotvrdených: ${left}. Po hovore ťuknite na krúžok.` : "Všetci sú potvrdení.");
+    $("tm-summary").textContent = `${p0 ? p0.name : "Všetci ošetrujúci"}: ` + (!items.length ? "nikto objednaný." : `objednaných ${items.length}. ` +
+      (left ? `Nepotvrdených: ${left}. Po hovore ťuknite na krúžok.` : "Všetci sú potvrdení."));
     fill($("tm-list"), ...items.map((a) => {
-      const p = provider(a.provider_id), t = a.type_id ? apptType(a.type_id) : null;
-      const li = h("li", { class: "call" + (a.status === "unconfirmed" ? "" : " confirmed") });
-      li.append(["unconfirmed", "confirmed"].includes(a.status) ? ringButton(a, true, () => { refreshTomorrowCount(); loadTomorrow(); }) : h("span", {}),
-        h("div", { class: "call-main" }, h("div", { class: "call-name", text: apptName(a) }),
-          h("div", { class: "call-meta", text: [`${hm(toMin(a.start.slice(11)))}–${hm(toMin(a.end.slice(11)))}`, p ? p.name : "", t ? t.name : "", a.note].filter(Boolean).join(" · ") })),
+      const p = provider(a.provider_id), t = a.type_id ? apptType(a.type_id) : null, ns = a.status === "no_show", sms = smsLine(a);
+      const li = h("li", { class: "call" + (a.status === "confirmed" || a.status === "done" ? " confirmed" : "") + (ns ? " noshow" : "") });
+      li.append(ns ? h("span", {}) : ringButton(a, true, () => { refreshTomorrowCount(); loadTomorrow(); }),
+        h("div", { class: "call-main" },
+          h("div", { class: "call-name" }, apptName(a), ns ? h("span", { class: "tag bad", text: "neprišiel" }) : null),
+          h("div", { class: "call-meta", text: [`${hm(toMin(a.start.slice(11)))}–${hm(toMin(a.end.slice(11)))}`, p0 || !p ? "" : p.name, t ? t.name : "",
+            a.status === "done" ? "ošetrený" : "", a.note].filter(Boolean).join(" · ") }),
+          a.patient && a.patient.alert ? h("div", { class: "call-alert" }, h("span", { class: "warn-ico", "aria-hidden": "true" }), " ", a.patient.alert) : null,
+          sms ? h("div", { class: "muted small", text: sms }) : null),
         a.patient && a.patient.phone ? telLink(a.patient.phone) : h("span", { class: "tel none", text: "bez telefónu" }));
       return li;
     }));
-    if (!items.length) fill($("tm-list"), h("li", { class: "empty", text: "Na tento deň nie je nikto objednaný." }));
   } catch (e) { if (S.boot) toast(e.message, true); }
 }
 
-function tmShift(n) { S.tmDate = n === 0 ? null : addDays(S.tmDate || addDays(S.boot.today, 1), n); loadTomorrow(); }
+function tmShift(n) { S.tmDate = n === 0 ? null : addDays(S.tmDate || callDay(), n); loadTomorrow(); }
 
 // ------------------------------------------------------------------ pacienti
 // Hľadanie podľa priezviska bez ohľadu na diakritiku, po výbere všetky termíny pacienta.
@@ -2424,24 +3352,24 @@ function searchPatients() {
 
 function timelineItem(a, cur) {
   const p = provider(a.provider_id), t = a.type_id ? apptType(a.type_id) : null;
-  const past = a.start.slice(0, 10) < S.boot.today;
-  return h("li", {}, h("button", { type: "button", class: "tl-item" + (past ? " past" : "") + (cur ? " cur" : ""), color: t ? t.color : null,
-    onclick: () => goToAppt(a), "aria-label": `${fmtDay(a.start.slice(0, 10))} ${hm(toMin(a.start.slice(11)))}, otvoriť v kalendári` },
-    h("span", { class: "tl-when", text: `${fmtShort(a.start.slice(0, 10))} ${hm(toMin(a.start.slice(11)))}` }),
-    h("span", { class: "tl-what", text: [p ? p.name : "", t ? t.name : "", a.status === "done" || a.status === "no_show" ? STATUS[a.status] : "", a.note].filter(Boolean).join(" · ") })));
+  const past = a.start.slice(0, 10) < S.boot.today, ns = a.status === "no_show";
+  return h("li", {}, h("button", { type: "button", class: "tl-item" + (past ? " past" : "") + (cur ? " cur" : "") + (ns ? " noshow" : ""), color: t ? t.color : null,
+    onclick: () => goToAppt(a), "aria-label": `${fmtDay(a.start.slice(0, 10))} ${hm(toMin(a.start.slice(11)))}${ns ? ", neprišiel" : ""}, otvoriť v kalendári` },
+    h("span", { class: "tl-when" }, `${fmtShort(a.start.slice(0, 10))} ${hm(toMin(a.start.slice(11)))}`, ns ? h("span", { class: "tag bad", text: "neprišiel" }) : null),
+    h("span", { class: "tl-what", text: [p ? p.name : "", t ? t.name : "", a.status === "done" ? "ošetrený" : "", a.note].filter(Boolean).join(" · ") })));
 }
 
 function goToAppt(a) {   // ťuknutie na termín otvorí daný deň v kalendári
   if ($("dlg").open) $("dlg").close();
   S.calMode = "day"; S.date = a.start.slice(0, 10); S.draft = null; S.focusAppt = a.id; S.scrollFor = null;
-  if (S.only !== null) S.only = a.provider_id;
+  S.prov = narrow() ? a.provider_id : null;
   showView("calendar");
 }
 
-function patientTimeline(p, box) {
-  let items = [], hasOlder = false, loading = false;
+function patientTimeline(p, box) {   // termíny od dnes a dochádzka: predchádzajúce návštevy, neprítomnosti červenou
+  let items = [], hasOlder = false, loading = false, stats = null;
   const list = h("ul", { class: "timeline" });
-  const more = h("button", { type: "button", class: "btn small", text: "Zobraziť staršie termíny", onclick: () => loadOlder() });
+  const more = h("button", { type: "button", class: "btn small", text: "Zobraziť staršie termíny", onclick: () => loadOlder(10) });
   function draw() {
     const today = S.boot.today, out = [];
     let sepDone = false;
@@ -2450,24 +3378,27 @@ function patientTimeline(p, box) {
       out.push(timelineItem(a));
     }
     fill(list, ...out);
-    const upcoming = items.filter((a) => a.start.slice(0, 10) >= today).length;
-    fill(box, h("div", { class: "row between" }, h("h3", { text: upcoming ? `Termíny od dnes (${upcoming})` : "Termíny" }), hasOlder ? more : null),
-      items.length ? list : h("p", { class: "muted", text: hasOlder ? "Od dnes nemá žiadny termín." : "Zatiaľ žiadne termíny." }));
+    fill(box, h("div", { class: "row between" }, h("h3", { text: "Termíny a dochádzka" }), hasOlder ? more : null),
+      stats ? h("p", { class: stats.no_show ? "field-err" : "muted", text: `Ošetrený: ${stats.visits}× · neprišiel bez ospravedlnenia: ${stats.no_show}×` }) : null,
+      items.length ? list : h("p", { class: "muted", text: "Zatiaľ žiadne termíny." }));
   }
-  async function loadOlder() {
+  async function loadOlder(limit) {
     if (loading) return;
     loading = true; more.disabled = true;
     try {
       const before = items.length ? items[0].start : S.boot.today + "T00:00";
-      const r = await api("GET", `/api/patients/${p.id}/appointments?before=${encodeURIComponent(before)}&limit=10`);
+      const r = await api("GET", `/api/patients/${p.id}/appointments?before=${encodeURIComponent(before)}&limit=${limit}`);
       items = [...r.items, ...items]; hasOlder = r.has_older;
       draw();
     } catch (e) { toast(e.message, true); }
     loading = false; more.disabled = false;
   }
   fill(box, h("p", { class: "muted", text: "Načítavam termíny…" }));
-  api("GET", `/api/patients/${p.id}/appointments`).then((r) => { items = r.items; hasOlder = r.has_older; draw(); })
-    .catch((e) => fill(box, h("p", { class: "error", text: e.message })));
+  api("GET", `/api/patients/${p.id}/appointments`).then((r) => {
+    items = r.items; hasOlder = r.has_older; stats = r.stats || null;
+    draw();
+    if (hasOlder) loadOlder(5);   // posledné návštevy hneď, staršie na tlačidlo
+  }).catch((e) => fill(box, h("p", { class: "error", text: e.message })));
 }
 
 async function openPatientDialog(p) {
@@ -2483,16 +3414,18 @@ async function openPatientDialog(p) {
       title: h("input", { type: "text", maxlength: 40, value: full ? full.title : "" }),
       phone: h("input", { type: "tel", maxlength: 40, value: full ? full.phone : "", placeholder: "0905 123 456" }),
       email: h("input", { type: "email", maxlength: 120, value: full ? full.email : "" }),
+      alert: h("textarea", { maxlength: 300, rows: 2, value: full ? full.alert || "" : "", placeholder: "napr. alergia na penicilín, silný dávivý reflex" }),
       note: h("textarea", { maxlength: 1000, rows: 2, value: full ? full.note : "" }),
     };
     const tl = h("div", { class: "field" });
     if (full) {
       add(ctx.form,
+        full.alert ? alertBox(full) : null,
         h("div", { class: "row between" },
           h("div", { class: "row" }, full.phone ? telLink(full.phone) : h("span", { class: "error", text: "V kartotéke chýba telefón" }),
             full.phone && !full.sms_ok ? h("span", { class: "muted", text: "Na toto číslo sa nedá poslať SMS." }) : null),
           writableProviders().length ? h("button", { type: "button", class: "btn", text: "Objednať pacienta",
-            onclick: () => openApptDialog({ patient: full, date: S.date || S.boot.today, provider_id: S.calMode === "week" ? S.weekProv : S.only }) }) : null),
+            onclick: () => openApptDialog({ patient: full, date: S.date || S.boot.today, provider_id: S.prov }) }) : null),
         tl);
       patientTimeline(full, tl);
     }
@@ -2502,14 +3435,17 @@ async function openPatientDialog(p) {
       h("div", { class: "grid2" }, field("Rodné číslo", rc.input, rc.hint), field("Titul", f.title)),
       h("div", { class: "grid2" }, h("label", { class: "field" }, h("span", {}, "Telefón ", full ? null : h("span", { class: "req", text: "(povinný)" })), f.phone),
         field("E-mail (nepovinný)", f.email)),
-      field("Poznámka k pacientovi (nie zdravotné údaje)", f.note));
+      field("Zdravotné upozornenie (alergie, dávivý reflex…)", f.alert,
+        h("small", { class: "muted", text: "Zobrazí sa červeným trojuholníkom pri každom termíne pacienta. Do SMS sa nedostane." })),
+      field("Poznámka k pacientovi", f.note));
     ctx.footer = h("div", { class: "row end" }, h("button", { type: "submit", class: "btn primary", text: "Uložiť pacienta" }));
     ctx.onSubmit = async () => {
       if (!f.surname.value.trim()) inlineError(f.surname, "Doplňte priezvisko.");
       const birth_number = rc.get();
       checkPhone(f.phone, !full || !!full.phone);
       checkEmail(f.email);
-      const body = { surname: f.surname.value, name: f.name.value, title: f.title.value, birth_number, phone: f.phone.value, email: f.email.value, note: f.note.value };
+      const body = { surname: f.surname.value, name: f.name.value, title: f.title.value, birth_number, phone: f.phone.value, email: f.email.value,
+        alert: f.alert.value, note: f.note.value };
       const saved = full ? await api("PATCH", `/api/patients/${full.id}`, body) : await api("POST", "/api/patients", body);
       ctx.close(); toast("Pacient uložený");
       if (!full) $("pt-search").value = saved.surname;
@@ -2527,6 +3463,13 @@ function formDialog(title, fields, submitLabel, onSave) {
     const controls = {};
     for (const f of fields) {
       let c;
+      if (f.type === "days") {   // pracovné dni ako zaškrtávacie štítky
+        c = h("div", { class: "chips", role: "group", "aria-label": f.label }, ["Po", "Ut", "St", "Št", "Pi"].map((nm, i) =>
+          h("label", { class: "chip daychip" }, h("input", { type: "checkbox", value: i + 1, checked: (f.value || []).includes(i + 1) }), nm)));
+        controls[f.key] = c;
+        add(ctx.form, h("div", { class: "field" }, h("span", { class: "field-label", text: f.label }), c));
+        continue;
+      }
       if (f.type === "palette") {
         const name = "pal" + (++uidSeq), cur = PALETTE.some(([v]) => v === f.value) ? f.value : PALETTE[0][0];
         c = h("div", { class: "swatches", role: "radiogroup", "aria-label": f.label }, PALETTE.map(([v, nm]) =>
@@ -2545,6 +3488,7 @@ function formDialog(title, fields, submitLabel, onSave) {
     ctx.onSubmit = async () => {
       const v = {};
       for (const f of fields) v[f.key] = f.type === "checkbox" ? controls[f.key].checked
+        : f.type === "days" ? [...controls[f.key].querySelectorAll("input:checked")].map((i) => Number(i.value))
         : f.type === "palette" ? controls[f.key].querySelector("input:checked").value : controls[f.key].value.trim();
       await onSave(v);
       ctx.close();
@@ -2570,8 +3514,12 @@ async function loadSettings() {
     { key: "day_start", label: "Začiatok dňa v kalendári", type: "time", value: B.settings.day_start },
     { key: "day_end", label: "Koniec dňa v kalendári", type: "time", value: B.settings.day_end },
     { key: "slot_minutes", label: "Krok kalendára", type: "select", value: B.settings.slot_minutes, options: [5, 10, 15, 20, 30, 60].map((m) => ({ value: m, label: `${m} minút` })) },
+    { key: "sms_confirm", label: "Po zapísaní termínu poslať pacientovi potvrdzujúcu SMS", type: "checkbox", value: B.settings.sms_confirm },
+    { key: "sms_remind", label: "Deň pred termínom poslať pripomienkovú SMS s výzvou na potvrdenie", type: "checkbox", value: B.settings.sms_remind },
+    { key: "sms_remind_time", label: "Hodina odoslania pripomienky", type: "time", value: B.settings.sms_remind_time },
   ], "Uložiť nastavenia", async (v) => {
-    await api("PUT", "/api/admin/settings", { clinic_name: v.clinic_name, day_start: v.day_start.slice(0, 5), day_end: v.day_end.slice(0, 5), slot_minutes: Number(v.slot_minutes) });
+    await api("PUT", "/api/admin/settings", { clinic_name: v.clinic_name, day_start: v.day_start.slice(0, 5), day_end: v.day_end.slice(0, 5), slot_minutes: Number(v.slot_minutes),
+      sms_confirm: v.sms_confirm, sms_remind: v.sms_remind, sms_remind_time: (v.sms_remind_time || "14:00").slice(0, 5) });
     toast("Nastavenia uložené");
   });
 
@@ -2580,8 +3528,12 @@ async function loadSettings() {
     { key: "short", label: "Skratka (do 14 znakov)", value: p.short, attrs: { maxlength: 14 } },
     { key: "color", label: "Farba", type: "color", value: p.color },
     { key: "chair_id", label: "Predvolené kreslo", type: "select", value: p.chair_id, options: chairOpts },
+    { key: "lunch_start", label: "Obedná prestávka od (prázdne = nevkladať)", type: "time", value: p.lunch_start || "" },
+    { key: "lunch_minutes", label: "Dĺžka prestávky v minútach", type: "number", value: p.lunch_minutes || 30, attrs: { min: 10, max: 180, step: 5, inputmode: "numeric" } },
+    { key: "lunch_days", label: "Prestávku vkladať v dňoch", type: "days", value: p.lunch_days || [] },
   ], "Uložiť ošetrujúceho", async (v) => {
-    await api("PATCH", `/api/admin/providers/${p.id}`, { name: v.name, short: v.short, color: v.color, chair_id: v.chair_id ? Number(v.chair_id) : null });
+    await api("PATCH", `/api/admin/providers/${p.id}`, { name: v.name, short: v.short, color: v.color, chair_id: v.chair_id ? Number(v.chair_id) : null,
+      lunch_start: v.lunch_start ? v.lunch_start.slice(0, 5) : null, lunch_minutes: Number(v.lunch_minutes) || 30, lunch_days: v.lunch_days });
     toast("Ošetrujúci uložený");
   });
 
@@ -2589,9 +3541,10 @@ async function loadSettings() {
     { key: "name", label: "Názov", value: t ? t.name : "", attrs: { maxlength: 60 } },
     { key: "color", label: "Farba bloku v kalendári", type: "palette", value: t ? t.color : PALETTE[0][0] },
     { key: "active", label: "Ponúkať pri zápise termínu (vypnutá ostáva na starších termínoch)", type: "checkbox", value: t ? t.active : true },
+    { key: "sms_note", label: "Pokyn pre pacienta do potvrdzujúcej SMS (nepovinné)", value: t ? t.sms_note || "" : "", attrs: { maxlength: 100, placeholder: "napr. Príďte prosím nalačno." } },
   ], "Uložiť kategóriu", async (v) => {
     if (v.name.length < 2) throw new Error("Doplňte názov kategórie.");
-    const body = { name: v.name, color: v.color, active: v.active, default_minutes: t ? t.default_minutes : 30 };
+    const body = { name: v.name, color: v.color, active: v.active, default_minutes: t ? t.default_minutes : 30, sms_note: v.sms_note };
     if (t) await api("PATCH", `/api/admin/types/${t.id}`, body); else await api("POST", "/api/admin/types", body);
     toast("Kategória uložená");
   });
@@ -2599,7 +3552,7 @@ async function loadSettings() {
   const editUser = (u) => formDialog(u ? "Používateľ" : "Nový používateľ", [
     { key: "name", label: "Meno na prihlasovacej obrazovke", value: u ? u.name : "", attrs: { maxlength: 60 } },
     { key: "role", label: "Rola", type: "select", value: u ? u.role : "nurse", options: u && u.role === "owner" && B.user.role !== "owner" ? [{ value: "owner", label: ROLE.owner }] : roleOpts },
-    { key: "provider_id", label: "Vlastný kalendár (lekár a hygienička ho musia mať)", type: "select", value: u ? u.provider_id : "", options: provOpts },
+    { key: "provider_id", label: "Vlastný kalendár: otvorí sa po prihlásení (lekár a hygienička ho musia mať)", type: "select", value: u ? u.provider_id : "", options: provOpts },
     { key: "pin", label: u ? "Nový PIN (nechajte prázdne, ak sa nemení)" : "PIN, 4 až 8 číslic", type: "password",
       value: "", attrs: { inputmode: "numeric", autocomplete: "new-password", maxlength: 8, pattern: "\\d{4,8}" } },
     { key: "active", label: "Účet je aktívny", type: "checkbox", value: u ? u.active : true },
@@ -2616,10 +3569,11 @@ async function loadSettings() {
 
   fill(box, 
     h("section", {}, h("h2", { text: "Ambulancia a kalendár" }),
-      row("", [h("b", { text: B.settings.clinic_name }), h("span", { class: "muted tnum", text: `${B.settings.day_start}–${B.settings.day_end}, krok ${B.settings.slot_minutes} min` })], editClinic)),
+      row("", [h("b", { text: B.settings.clinic_name }), h("span", { class: "muted tnum", text: `${B.settings.day_start}–${B.settings.day_end}, krok ${B.settings.slot_minutes} min · SMS potvrdenie ${B.settings.sms_confirm ? "áno" : "nie"}, pripomienka ${B.settings.sms_remind ? "deň vopred o " + B.settings.sms_remind_time : "nie"}` })], editClinic)),
     h("section", {}, h("h2", { text: "Ošetrujúci" }),
       B.providers.map((p) => row("", [h("span", { class: "dot", color: p.color }), h("b", { text: p.name }),
-        h("span", { class: "muted", text: p.chair_id && chair(p.chair_id) ? chair(p.chair_id).name : "bez kresla" })], () => editProvider(p)))),
+        h("span", { class: "muted tnum", text: (p.chair_id && chair(p.chair_id) ? chair(p.chair_id).name : "bez kresla") + (p.lunch_start && (p.lunch_days || []).length
+          ? ` · obed ${p.lunch_start}, ${p.lunch_minutes} min (${p.lunch_days.map((d) => ["", "po", "ut", "st", "št", "pi"][d]).join(", ")})` : " · bez obednej prestávky") })], () => editProvider(p)))),
     h("section", {}, h("div", { class: "row between" }, h("h2", { text: "Kategórie úkonov" }),
       h("button", { type: "button", class: "btn", text: "Pridať kategóriu", onclick: () => editType(null) })),
       h("p", { class: "muted", text: "Kategória zafarbí blok v kalendári. Pri zápise termínu je vždy nepovinná." }),
@@ -2636,15 +3590,20 @@ async function loadSettings() {
 
 function initShell() {
   for (const t of document.querySelectorAll(".tab")) t.addEventListener("click", () => showView(t.dataset.view));
-  $("logout").onclick = logout;
+  $("account").onclick = openAccount;
+  $("urgent-count").onclick = openUrgentList;
   $("day-prev").onclick = () => shift(-1);
   $("day-next").onclick = () => shift(1);
   $("day-today").onclick = () => { S.scrollFor = null; setDate(clinicNow().date); };
   $("day-input").onchange = (e) => setDate(e.target.value);
-  $("day-input").addEventListener("click", (e) => { try { if (narrow()) e.target.showPicker(); } catch (err) { /* prehliadač otvorí výber sám */ } });
+  $("day-input").addEventListener("click", (e) => { try { if (getComputedStyle(e.target).opacity === "0") e.target.showPicker(); } catch (err) { /* prehliadač otvorí výber sám */ } });
   $("mode-day").onclick = () => setMode("day");
   $("mode-week").onclick = () => setMode("week");
-  $("new-appt").onclick = () => openApptDialog({ date: S.date, provider_id: S.calMode === "week" ? S.weekProv : S.only });
+  $("new-appt").onclick = () => openApptDialog({ date: S.date, provider_id: S.prov });
+  $("free-slot").onclick = gotoFreeSlot;
+  $("urgent-new").onclick = openUrgentNew;
+  $("prov-select").onchange = (e) => setProv(e.target.value);
+  $("dlg").addEventListener("close", () => { S.dialogHold = null; syncHold(); });   // zavretím okna sa zámok času uvoľní
   $("print-day").onclick = () => { fillPrint(); window.print(); };
   $("tm-prev").onclick = () => tmShift(-1);
   $("tm-next").onclick = () => tmShift(1);
@@ -2658,12 +3617,20 @@ function initShell() {
   window.addEventListener("resize", () => {
     if (S.boot && S.view === "calendar" && narrow() !== lastNarrow) { lastNarrow = narrow(); renderCalendar(); }
   });
-  // čiara aktuálneho času (posúva sa sama, bez prekreslenia) a prechod cez polnoc
+  // čiara aktuálneho času (posúva sa sama, bez prekreslenia), čakacie časy akútnych a prechod cez polnoc
   setInterval(() => {
     if (!S.boot || document.hidden) return;
-    const today = clinicNow().date;
-    if (today !== S.boot.today) { const follow = S.date === S.boot.today; S.boot.today = today; if (follow) S.date = today; refreshAll(); }
-    else if (S.view === "calendar") tickNow();
+    const now = clinicNow(), today = now.date;
+    if (S.myHold) api("POST", "/api/holds", S.myHold).catch(() => {});   // rozpracovaný čas ostáva zamknutý
+    if (today !== S.boot.today) { const follow = S.date === S.boot.today; S.boot.today = today; if (follow) S.date = today; refreshAll(); return; }
+    if (S.view !== "calendar") return;
+    tickNow();
+    renderUrgent();
+    if ($("dlg").open || S.drag) return;
+    // začiatok alebo koniec termínu: mení sa odškrtávanie a počet zostávajúcich; vypršaný zámok kolegu zmizne
+    const t = hm24(now.min);
+    if (S.holds.some((x) => x.until <= Date.now())) loadDay();
+    else if (S.appts.some((a) => a.start.slice(0, 10) === today && (a.start.slice(11) === t || a.end.slice(11) === t))) renderCalendar();
   }, 20 * 1000);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) refreshAll(); });
 }
