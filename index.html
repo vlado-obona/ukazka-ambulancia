@@ -700,6 +700,10 @@ html, body { overscroll-behavior: none; }   /* potiahnutie zhora nadol nesmie ob
 .appt-note { flex: 0 0 100%; min-width: 0; padding: 0 6px 2px 8px; font-size: .85rem; line-height: 1.25; white-space: pre-line; overflow-wrap: break-word;
   color: var(--ink); cursor: pointer; }
 .appt.editing .appt-note { cursor: grab; touch-action: none; }
+.appt.mid .appt-body { padding-top: 3px; }
+.appt.mid .appt-name { -webkit-line-clamp: 1; }   /* 30 minút: meno v jednom riadku, pod ním kategória s poznámkou */
+.appt.mid > .ring { height: 100%; max-height: 40px; }
+.appt.mid .pen { height: 34px; }
 .appt.short .appt-body { padding-top: 2px; }
 .appt.short .appt-name { flex: 0 1 auto; min-width: 0; }   /* meno má prednosť, zvyšok riadka kategória a poznámka */
 .appt.short .appt-meta { flex: 1 1 0; min-width: 0; }
@@ -745,6 +749,19 @@ html, body { overscroll-behavior: none; }   /* potiahnutie zhora nadol nesmie ob
   .appt .warn::before { width: 18px; height: 18px; }
   .appt .pen { width: 30px; margin-right: 0; }
   .appt-note { padding-left: 6px; }
+  /* 30-minútový termín v úzkom stĺpci: celé meno na dva riadky má prednosť pred kategóriou (tú ukazuje farba) */
+  .appt.mid .appt-name { -webkit-line-clamp: 2; font-size: .9rem; line-height: 1.15; }
+  .appt.mid .appt-meta { display: none; }
+  .appt.mid .appt-body { padding-top: 2px; }
+  /* výstražný trojuholník v rohu pri ceruzke, aby neuberal menu celý stĺpec */
+  .appt:not(.short) > .warn { position: absolute; right: 30px; top: 2px; width: 24px; height: 24px; max-height: none; }
+  .appt:not(.short) > .warn::before { width: 16px; height: 16px; }
+  .appt.has-warn:not(.short) .appt-name::before { content: ""; float: right; width: 20px; height: 16px; }
+}
+@container (max-width: 160px) {   /* tablet na výšku alebo týždeň so 7 dňami: bez ceruzky, prvé ťuknutie termín odomkne */
+  .appt .pen { display: none; }
+  .appt .appt-name { font-size: .9rem; line-height: 1.15; }
+  .appt:not(.short) > .warn { right: 1px; }
 }
 @container (max-width: 112px) {   /* úzke stĺpce (týždeň na telefóne): bez ceruzky, prvé ťuknutie termín odomkne */
   .appt { left: 2px; right: 2px; border-left-width: 4px; }
@@ -753,11 +770,14 @@ html, body { overscroll-behavior: none; }   /* potiahnutie zhora nadol nesmie ob
   .appt .appt-name { font-size: .72rem; line-height: 1.12; white-space: normal; overflow-wrap: break-word;
     display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
   .appt.tiny .appt-name { -webkit-line-clamp: 1; font-size: .68rem; }
+  .appt.mid .appt-name { font-size: .72rem; line-height: 1.12; }
   .appt .appt-note { font-size: .64rem; line-height: 1.15; padding: 0 1px 1px 3px; }
   .appt .ring { width: auto; }
   .appt .warn { top: 1px; right: 1px; width: 13px; height: 13px; }
   .appt .warn::before { width: 12px; height: 12px; }
-  .appt.has-warn .appt-name::before { content: ""; float: right; width: 12px; height: 11px; }   /* miesto pre výstražný trojuholník */
+  .appt:not(.short) > .warn { top: 1px; right: 1px; width: 13px; height: 13px; }
+  .appt:not(.short) > .warn::before { width: 12px; height: 12px; }
+  .appt.has-warn .appt-name::before, .appt.has-warn:not(.short) .appt-name::before { content: ""; float: right; width: 12px; height: 11px; }   /* miesto pre výstražný trojuholník */
   .appt.block .appt-name { font-size: .66rem; }
 }
 @media (max-width: 699px) {
@@ -1998,8 +2018,7 @@ function renderCalendar() {
 
   const slot = Number(B.settings.slot_minutes) || 15;
   const coarse = window.matchMedia("(pointer: coarse)").matches;
-  const phone = coarse && Math.min(window.innerWidth, window.innerHeight) < 700;
-  const ppm = (phone ? 22 : coarse ? 44 : 30) / 15;   // tablet: 15 minút má výšku prsta; telefón: hodina na 88 px, aby bolo vidno viac pacientov
+  const ppm = 22 / 15;   // hodina má na telefóne, tablete aj počítači 88 px: na obrazovku sa zmestí celé dopoludnie
   let start = toMin(B.settings.day_start), end = toMin(B.settings.day_end);
   for (const a of S.appts) {   // termíny mimo ordinačných hodín sa nesmú stratiť
     start = Math.min(start, Math.floor(toMin(a.start.slice(11)) / 60) * 60);
@@ -2095,6 +2114,9 @@ function tickNow() {
   if (t) { t.hidden = !inside || !visibleDates().includes(now.date); t.style.top = y + "px"; t.textContent = hm(now.min); }
 }
 
+// Podľa výšky kartičky: tiny a short = jeden riadok, mid (30 až 35 minút) = meno a pod ním kategória s poznámkou, vyššie = celá poznámka.
+const apptSize = (height) => ({ tiny: height < 26, short: height < 36, mid: height >= 36 && height < 56 });
+
 function apptNode(a, c, dayStart, dayEnd, ppm) {
   const s = toMin(a.start.slice(11)), e = endMin(a, c.date);
   const top = (Math.max(s, dayStart) - dayStart) * ppm;
@@ -2103,14 +2125,14 @@ function apptNode(a, c, dayStart, dayEnd, ppm) {
   const isBlock = a.kind === "block", allDay = isBlock && a.all_day;
   const elapsed = !isBlock && (a.status === "unconfirmed" || a.status === "confirmed") && a.end <= nowIso();   // čas už uplynul
   const writable = canWrite(a.provider_id) && !allDay, editing = writable && S.edit === a.id;
-  const short = height < 52, tiny = height < 26;
+  const { short, tiny, mid } = apptSize(height);
   // Čas „od–do" v kartičke nie je (je na časovej osi); miesto patrí kategórii a celej poznámke.
   const bits = [];
   if (allDay) bits.push("celý deň");
   if (t) bits.push(t.name);
   if (a.status === "done") bits.push("ošetrený");
   const node = h("div", { class: `appt ${a.status}${isBlock ? " block" : ""}${allDay ? " allday" : ""}${a.auto === "acute" ? " acute" : ""}${elapsed ? " elapsed" : ""}` +
-      `${short ? " short" : ""}${tiny ? " tiny" : ""}${editing ? " editing" : ""}${a.patient && a.patient.alert ? " has-warn" : ""}`,
+      `${short ? " short" : ""}${tiny ? " tiny" : ""}${mid ? " mid" : ""}${editing ? " editing" : ""}${a.patient && a.patient.alert ? " has-warn" : ""}`,
     style: `top:${top}px;height:${height}px`, color: isBlock || !t ? null : t.color,
     title: `${allDay ? "celý deň" : `${hm(s)}–${hm(e)}`} · ${apptName(a)}${a.note ? "\n" + a.note : ""}` });
   node.dataset.id = a.id;
@@ -2125,7 +2147,7 @@ function apptNode(a, c, dayStart, dayEnd, ppm) {
       }
       if (allDay) return openVacationInfo(a);
       if (writable && S.edit !== a.id) {   // zamknutý: náhodné ťuknutie nič neotvorí ani nezmení
-        if (S.colEls.get(c.key).el.clientWidth <= 112) return setEdit(a.id);   // úzky stĺpec nemá ceruzku: prvé ťuknutie odomkne, druhé otvorí
+        if (S.colEls.get(c.key).el.clientWidth <= 160) return setEdit(a.id);   // úzky stĺpec nemá ceruzku: prvé ťuknutie odomkne, druhé otvorí
         node.classList.remove("nudge"); void node.offsetWidth; node.classList.add("nudge");
         return holdHint("Termín je zamknutý. Ťuknite na ceruzku, potom ho otvoríte, presuniete alebo zmeníte dĺžku.", { ms: 3000 });
       }
@@ -2133,9 +2155,9 @@ function apptNode(a, c, dayStart, dayEnd, ppm) {
     },
     "aria-label": `${allDay ? "" : hm(s) + "–" + hm(e) + " "}${apptName(a)}${a.status === "no_show" ? ", neprišiel" : ""}${allDay || !writable || editing ? ", otvoriť" : ", zamknutý"}` },
     h("span", { class: "appt-name" }, apptName(a), a.status === "no_show" ? h("span", { class: "tag", text: "neprišiel" }) : null),
-    h("span", { class: "appt-meta", text: (short ? [...bits, a.note] : bits).filter(Boolean).join(" · ") }));
+    h("span", { class: "appt-meta", text: (short || mid ? [...bits, a.note] : bits).filter(Boolean).join(" · ") }));
   node.append(body);
-  const note = !short && a.note ? h("div", { class: "appt-note", text: a.note, onclick: () => body.click() }) : null;
+  const note = !short && !mid && a.note ? h("div", { class: "appt-note", text: a.note, onclick: () => body.click() }) : null;
   if (a.patient && a.patient.alert) {   // trvalé zdravotné upozornenie pacienta
     node.append(h("button", { type: "button", class: "warn", title: "Zdravotné upozornenie", "aria-label": `Zdravotné upozornenie: ${apptName(a)}`,
       onclick: (ev) => { ev.stopPropagation(); openAlert(a.patient); } }));
@@ -2595,7 +2617,7 @@ function drawGripResize(g) {
   const { start, ppm } = S.geo;
   const top = (Math.max(g.s, start) - start) * ppm, height = Math.max(18, g.minutes * ppm - 2);
   g.node.style.height = height + "px";
-  g.node.classList.toggle("short", height < 52);
+  for (const [k, on] of Object.entries(apptSize(height))) g.node.classList.toggle(k, on);
   g.grip.style.top = top + height - Number(g.grip.dataset.in) + "px";
   const meta = g.node.querySelector(".appt-meta");
   if (meta) meta.textContent = `${hm(g.s)}–${hm(g.s + g.minutes)} · ${g.minutes} min`;
