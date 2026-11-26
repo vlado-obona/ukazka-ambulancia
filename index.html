@@ -784,6 +784,34 @@ html, body { overscroll-behavior: none; }   /* potiahnutie zhora nadol nesmie ob
   .cal-head.day .dnes { display: none; }   /* dnešok je odlíšený farbou */
   .cal-head.day button { min-height: 0; }
 }
+
+/* ------------------------------------------------ Pomocník: návod na ovládanie */
+.help { display: grid; gap: 24px; }
+.help header, .help section { display: grid; gap: 10px; }
+.help h3 { font-size: 1.05rem; }
+.help ul { margin: 0; padding-left: 20px; display: grid; gap: 7px; }
+.help li, .help p { line-height: 1.45; }
+.help .legend { list-style: none; padding: 0; gap: 8px; }
+.help .legend li { display: flex; align-items: center; gap: 12px; }
+.help-ico { flex: none; width: 58px; display: flex; justify-content: center; gap: 4px; }
+.help-ico svg { width: 26px; height: 26px; }
+.help details { border: 1.5px solid var(--rule-strong); border-radius: var(--radius); background: var(--surface); }
+.help details.here { border-color: var(--accent); }
+.help summary { min-height: var(--tap); display: flex; align-items: center; gap: 10px; padding: 0 14px; font-weight: 700; cursor: pointer; list-style: none; }
+.help summary::-webkit-details-marker { display: none; }
+.help summary::before { content: "›"; font-size: 1.3rem; line-height: 1; color: var(--ink-2); transition: transform .12s; }
+.help details[open] > summary::before { transform: rotate(90deg); }
+.help details.here > summary::after { content: "toto zariadenie"; margin-left: auto; padding: 1px 10px; border-radius: 999px; background: var(--accent); color: var(--on-accent);
+  font-size: .8rem; font-weight: 600; white-space: nowrap; }
+.help details > ul { padding: 2px 16px 14px 36px; }
+.help-q { display: none; }
+@media (max-width: 699px) and (orientation: portrait), (max-width: 699px) and (min-height: 501px) {   /* telefón na výšku: v dolnej lište len otáznik */
+  .shell .tab[data-view="help"] { flex: 0 0 44px; }
+  .shell .tabs:has(#tab-settings:not([hidden])) .tab { font-size: .76rem; }   /* s Nastaveniami je v lište o položku viac */
+  .help-full { display: none; }
+  .help-q { display: grid; place-items: center; width: 28px; height: 28px; border: 2px solid currentColor; border-radius: 50%; font-weight: 700; font-size: 1rem; line-height: 1; }
+}
+@media (prefers-reduced-motion: reduce) { .help summary::before { transition: none; } }
 </style>
 </head>
 <body>
@@ -827,6 +855,7 @@ html, body { overscroll-behavior: none; }   /* potiahnutie zhora nadol nesmie ob
       <button type="button" class="tab" data-view="tomorrow">Na zajtra <span id="tomorrow-count" class="count" hidden></span></button>
       <button type="button" class="tab" data-view="patients">Pacienti</button>
       <button type="button" class="tab" data-view="settings" id="tab-settings" hidden>Nastavenia</button>
+      <button type="button" class="tab" data-view="help" aria-label="Pomocník: návod na ovládanie"><span class="help-full">Pomocník</span><span class="help-q" aria-hidden="true">?</span></button>
     </nav>
     <div class="who">
       <span class="demo">Ukážka</span>
@@ -896,6 +925,89 @@ html, body { overscroll-behavior: none; }   /* potiahnutie zhora nadol nesmie ob
 
   <section id="view-settings" class="view pad" hidden>
     <div id="settings-body" class="settings"></div>
+  </section>
+
+  <section id="view-help" class="view pad" hidden>
+    <div class="help">
+      <header>
+        <h2>Návod na ovládanie</h2>
+        <p class="lead">Stručný prehľad práce s objednávacou knihou na počítači, tablete a telefóne.</p>
+      </header>
+
+      <section>
+        <h3>Značky na termíne</h3>
+        <ul class="legend">
+          <li><span class="help-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.5" fill="#fff" stroke="#16202a" stroke-width="2.5"/></svg><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10.5" fill="#15803d"/><path d="M6 12.5l4 4 8-9" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <span><b>Krúžok</b> potvrdí termín. Zelený s fajkou znamená potvrdený, ďalším ťuknutím potvrdenie zrušíte.</span></li>
+          <li><span class="help-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="5" fill="#fff" stroke="#16202a" stroke-width="2.5"/></svg></span>
+            <span><b>Štvorček</b> nahradí krúžok, keď čas termínu začal. Ťuknutím označíte pacienta ako ošetreného.</span></li>
+          <li><span class="help-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 22 20.5H2z" fill="#dc2626" stroke="#dc2626" stroke-width="2" stroke-linejoin="round"/><path d="M12 9.5v5.5" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/><circle cx="12" cy="18" r="1.3" fill="#fff"/></svg></span>
+            <span><b>Červený trojuholník</b> je zdravotné upozornenie pacienta. Ťuknutím sa zobrazí.</span></li>
+          <li><span class="help-ico"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="#16202a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l1-4.5L16.5 4a2.1 2.1 0 013 3L8 18.5z"/><path d="M14.5 6l3 3"/></svg></span>
+            <span><b>Ceruzka</b> termín odomkne. Zamknutý termín sa nedá otvoriť, presunúť ani natiahnuť.</span></li>
+          <li><span class="help-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="5" width="22" height="14" rx="3" fill="#efe3cf"/><rect x="1" y="5" width="5" height="14" rx="2" fill="#b45309"/></svg></span>
+            <span><b>Farba</b> kartičky je kategória výkonu.</span></li>
+          <li><span class="help-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="5" width="22" height="14" rx="3" fill="#f4f5f7" stroke="#c8cdd6"/><path d="M5 19 12 5M11 19 18 5M17 19 22 9" stroke="#9aa3af" stroke-width="2"/></svg></span>
+            <span><b>Šrafovaný blok</b> je vyhradený čas: „Obed“ a červený ranný blok „Akútni pacienti“.</span></li>
+        </ul>
+        <p>Krúžok, štvorček a trojuholník fungujú aj na zamknutom termíne. Odomknutý termín má prerušovaný rámik a zamkne sa sám: po zmene, po 20 sekundách, po ťuknutí inde alebo po odrolovaní.</p>
+      </section>
+
+      <section>
+        <h3>Ovládanie podľa zariadenia</h3>
+        <details data-dev="pc">
+          <summary>Počítač (myš)</summary>
+          <ul>
+            <li><b>Nový termín:</b> kliknite na voľné miesto (vznikne blok na 30 minút) alebo ťahaním myšou zvoľte dĺžku. Potom stlačte „Potvrdiť … min“.</li>
+            <li><b>Odomknúť:</b> kliknite na ceruzku na termíne.</li>
+            <li><b>Otvoriť:</b> kliknite na odomknutý termín.</li>
+            <li><b>Presunúť:</b> odomknutý termín potiahnite na nový čas alebo deň.</li>
+            <li><b>Zmeniť dĺžku:</b> ťahajte spodný okraj odomknutého termínu.</li>
+            <li><b>Iný deň alebo týždeň:</b> šípky, „Dnes“ alebo kalendárik hore.</li>
+            <li><b>Kláves Esc:</b> zamkne termín, zruší rozpracovaný blok alebo presun.</li>
+          </ul>
+        </details>
+        <details data-dev="tablet">
+          <summary>Tablet (dotyk)</summary>
+          <ul>
+            <li><b>Nový termín:</b> ťuknite na voľné miesto (vznikne blok na 30 minút). Inú dĺžku zvolíte podržaním prsta a ťahaním alebo úchytom na spodku bloku. Potom stlačte „Potvrdiť … min“.</li>
+            <li><b>Odomknúť:</b> ťuknite na ceruzku. Keď sú stĺpce úzke a ceruzku nevidno (tablet na výšku, týždeň so 7 dňami), termín odomkne prvé ťuknutie.</li>
+            <li><b>Otvoriť:</b> ťuknite na odomknutý termín.</li>
+            <li><b>Presunúť:</b> odomknutý termín potiahnite. Dá sa aj bez ceruzky: podržte na termíne prst 1,5 sekundy na mieste a potom ťahajte.</li>
+            <li><b>Zmeniť dĺžku:</b> ťahajte zelený úchyt na spodku odomknutého termínu.</li>
+            <li><b>Iný deň alebo týždeň:</b> šípky, „Dnes“, kalendárik alebo potiahnutie prstom do strany.</li>
+          </ul>
+        </details>
+        <details data-dev="phone">
+          <summary>Telefón (dotyk)</summary>
+          <ul>
+            <li><b>Nový termín:</b> ťuknite na voľné miesto alebo na tlačidlo „Nový termín“. Dĺžku zmeníte úchytom na spodku bloku. Potom stlačte „Potvrdiť … min“.</li>
+            <li><b>Odomknúť:</b> v pohľade Deň ťuknite na ceruzku. V pohľade Týždeň termín odomkne prvé ťuknutie, druhé ho otvorí.</li>
+            <li><b>Otvoriť:</b> ťuknite na odomknutý termín.</li>
+            <li><b>Presunúť:</b> odomknutý termín potiahnite, alebo podržte na termíne prst 1,5 sekundy na mieste a potom ťahajte.</li>
+            <li><b>Zmeniť dĺžku:</b> ťahajte zelený úchyt na spodku odomknutého termínu.</li>
+            <li><b>Iný deň alebo týždeň:</b> šípky, potiahnutie prstom do strany, v pohľade Deň aj pás dní hore.</li>
+          </ul>
+        </details>
+      </section>
+
+      <section>
+        <h3>Ďalšie úkony</h3>
+        <ul>
+          <li><b>Presun na iný deň:</b> v týždni potiahnite termín do iného stĺpca. Pri okraji obrazovky kalendár prelistuje na ďalší týždeň.</li>
+          <li><b>Presun bez ťahania:</b> v otvorenom termíne zvoľte „Presunúť“ a ťuknite na nový čas v kalendári.</li>
+          <li><b>Najbližší voľný</b> (na menších obrazovkách „Voľný“): skočí na najbližší voľný čas v ordinačných hodinách, mimo obeda a ranného bloku, a pripraví blok. Ďalšie stlačenie hľadá neskorší.</li>
+          <li><b>Akútny pacient:</b> „+ Urgentný“ ho zaradí do zoznamu. Tlačidlo „Na zavolanie“ (skrátene „Volať“) zoznam otvorí; odtiaľ pacienta vyberiete a ťuknete na voľný čas. Môže ísť aj priamo do ranného bloku pre akútnych.</li>
+          <li><b>Ranný blok a obed:</b> kto chce ten čas použiť na bežný termín, blok najprv odomkne a skráti alebo zruší.</li>
+          <li><b>Lekár a pohľad:</b> menu vľavo hore prepína lekára, „Všetci“ ukáže deň celej ambulancie. V týždni ťuknutie na hlavičku dňa otvorí ten deň.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h3>Kde je hlavná ponuka</h3>
+        <p>Na počítači a tablete je vľavo zvislý pás: Kalendár, Na zajtra, Pacienti, Pomocník a dole prihlásený používateľ. Na telefóne držanom na výšku je tá istá ponuka dole; Pomocník je tam pod otáznikom.</p>
+      </section>
+    </div>
   </section>
 </div>
 
@@ -1818,7 +1930,7 @@ function refreshAll() {
 
 function showView(name) {
   S.view = name;
-  for (const v of ["calendar", "tomorrow", "patients", "settings"]) $("view-" + v).hidden = v !== name;
+  for (const v of ["calendar", "tomorrow", "patients", "settings", "help"]) $("view-" + v).hidden = v !== name;
   for (const t of document.querySelectorAll(".tab")) {
     if (t.dataset.view === name) t.setAttribute("aria-current", "page"); else t.removeAttribute("aria-current");
   }
@@ -1827,6 +1939,18 @@ function showView(name) {
   else if (name === "tomorrow") { S.tmDate = null; loadTomorrow(); }
   else if (name === "patients") { searchPatients(); $("pt-search").focus(); }
   else if (name === "settings") loadSettings();
+  else if (name === "help") renderHelp();
+}
+
+function renderHelp() {   // rozbalí návod pre zariadenie, na ktorom je stránka práve otvorená
+  const coarse = window.matchMedia("(pointer: coarse)").matches;
+  const dev = !coarse ? "pc" : Math.min(window.innerWidth, window.innerHeight) < 700 ? "phone" : "tablet";
+  for (const d of document.querySelectorAll("#view-help details[data-dev]")) {
+    const here = d.dataset.dev === dev;
+    d.open = here;
+    d.classList.toggle("here", here);
+  }
+  $("view-help").scrollTop = 0;
 }
 
 // ------------------------------------------------------------------ kalendár
